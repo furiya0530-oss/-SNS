@@ -1,0 +1,512 @@
+/* ════════════════════════════════════════════════
+   アプリ全体の見た目（CSS）
+   ワイヤーフレーム（docs/diary-peek-sns-wireframe.html）の
+   配色・フォントをそのまま引き継いでいます。
+   ════════════════════════════════════════════════ */
+
+/* ── 1. 色の定義 ─────────────────────────────
+   :root に書いた --◯◯ は「変数」です。
+   var(--paper) のように呼び出して使います。
+   色を変えたいときは、ここだけ書き換えれば全体に反映されます。 */
+:root {
+  --ink-bg: #14161f; /* 一番外側の暗い背景 */
+  --chrome: #1e2233; /* スマホ枠の色 */
+  --chrome-2: #262b41; /* タブバーの色 */
+  --paper: #f6f1e7; /* 紙のような本文背景 */
+  --paper-2: #efe7d6; /* 少し濃い紙色 */
+  --ink-text: #2b2a28; /* 本文の文字色 */
+  --ink-text-soft: #6b655a; /* 補足の文字色 */
+  --off-white: #ede8dc; /* 暗い背景の上の文字 */
+  --off-white-soft: #b9b6ae;
+  --muted: #b7ada0; /* 日付などの薄い文字 */
+  --moss: #5c7a6b; /* アクセントの苔色 */
+  --moss-deep: #41594d;
+  --moss-light: #9dbcaa; /* 暗い背景の上で使う明るい苔色 */
+  --rose: #9c5468; /* いいね（ハート）の色 */
+  --gold: #b08d57; /* カード左端のライン */
+  --line: #dcd3be; /* 罫線 */
+}
+
+/* ── 2. 全体のリセットと土台 ───────────────── */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink-bg);
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* ── 3. スマホ枠 ───────────────────────────── */
+.phone {
+  width: 380px;
+  height: 760px;
+  max-height: calc(100vh - 48px);
+  background: var(--chrome);
+  border-radius: 36px;
+  padding: 12px;
+  box-shadow:
+    0 30px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.screen {
+  width: 100%;
+  height: 100%;
+  background: var(--chrome);
+  border-radius: 26px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.statusbar {
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  color: var(--off-white);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+}
+
+/* ── 4. 画面上部のタイトル ─────────────────── */
+.topbar {
+  padding: 6px 18px 14px;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  margin: 0;
+  font-family: 'Lora', serif;
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--off-white);
+}
+
+.topbar-sub {
+  margin: 2px 0 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--off-white-soft);
+  letter-spacing: 0.05em;
+}
+
+/* ── 5. スクロールする本体 ─────────────────── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--paper);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  padding: 16px 14px 96px; /* 下はタブバーに隠れないよう広めに空ける */
+}
+
+/* スクロールバーを隠して、アプリらしい見た目にする */
+.content::-webkit-scrollbar {
+  display: none;
+}
+.content {
+  scrollbar-width: none;
+}
+
+/* ── 6. タブバー ───────────────────────────── */
+.tabbar {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  height: 60px;
+  background: var(--chrome-2);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: var(--off-white-soft);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  transition: color 0.15s;
+}
+
+.tab-icon {
+  font-size: 17px;
+  line-height: 1;
+}
+
+/* 選択中のタブだけ、明るい苔色 + 太字にして目立たせる */
+.tab.active {
+  color: var(--moss-light);
+  font-weight: 600;
+}
+
+/* まだ作っていない画面のタブは薄く表示 */
+.tab:disabled {
+  opacity: 0.35;
+}
+
+/* ── 7. お題バナー ─────────────────────────── */
+.theme-banner {
+  background: linear-gradient(135deg, var(--moss-deep), var(--moss));
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 右上の丸い模様（飾り） */
+.theme-banner::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.theme-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.75);
+  text-transform: uppercase;
+}
+
+.theme-title {
+  font-family: 'Klee One', serif;
+  font-weight: 600;
+  font-size: 20px;
+  color: #fff;
+  margin-top: 4px;
+}
+
+/* ── 8. 日記カード ─────────────────────────── */
+.card {
+  background: #fff;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 3px 10px rgba(43, 42, 40, 0.1);
+  border-left: 5px solid var(--gold); /* 図書カード風の金の帯 */
+  overflow: hidden;
+}
+
+.card-inner {
+  padding: 16px 16px 14px;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.persona {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  color: var(--ink-text-soft);
+  background: var(--paper-2);
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+.persona b {
+  color: var(--ink-text);
+}
+
+.card-date {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  padding-top: 4px;
+}
+
+.card-text {
+  font-family: 'Klee One', serif;
+  font-size: 15.5px;
+  line-height: 1.95;
+  color: var(--ink-text);
+  white-space: pre-wrap; /* 入力された改行をそのまま表示する */
+}
+
+/* 折りたたみ中は5行までしか見せない */
+.card-text.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.read-more {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--moss-deep);
+  margin-top: 6px;
+  text-decoration: underline;
+}
+
+.tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--moss-deep);
+  background: #eaf0ec;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.card-bottom {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+/* いいねボタン */
+.like-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-text-soft);
+  padding: 4px 10px 4px 8px;
+  border-radius: 20px;
+  transition: background 0.15s;
+}
+
+.like-btn:hover {
+  background: var(--paper-2);
+}
+
+.like-icon {
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* いいね済みのときは赤みのある色にする */
+.like-btn.liked {
+  color: var(--rose);
+}
+
+.empty-note {
+  font-family: 'Klee One', serif;
+  font-size: 14px;
+  color: var(--ink-text-soft);
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* ── 9. 投稿画面のフォーム ─────────────────── */
+.field-label {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-text-soft);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+
+.editor {
+  display: block;
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  min-height: 200px;
+  font-family: 'Klee One', serif;
+  font-size: 15px;
+  line-height: 2;
+  color: var(--ink-text);
+  resize: vertical;
+  margin-bottom: 8px;
+}
+
+.editor:focus {
+  outline: 2px solid var(--moss);
+  outline-offset: -1px;
+}
+
+.editor::placeholder {
+  color: var(--muted);
+}
+
+/* 文字数の進捗バー */
+.progress-track {
+  height: 4px;
+  background: var(--paper-2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--moss);
+  border-radius: 2px;
+  transition: width 0.2s;
+}
+
+.char-count {
+  text-align: right;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+
+/* 400字を超えたら色を変えて「書けた」と分かるようにする */
+.char-count.ok {
+  color: var(--moss-deep);
+}
+
+/* ハッシュタグ入力欄 */
+.hashtag-input {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 18px;
+}
+
+.hashtag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--moss-deep);
+  background: #eaf0ec;
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.chip-remove {
+  font-size: 13px;
+  line-height: 1;
+  color: var(--moss-deep);
+  opacity: 0.6;
+}
+
+.chip-remove:hover {
+  opacity: 1;
+}
+
+.tag-field {
+  flex: 1;
+  min-width: 100px;
+  border: none;
+  outline: none;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-text);
+}
+
+.tag-field::placeholder {
+  color: var(--muted);
+}
+
+.tag-add-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--moss-deep);
+}
+
+.tag-add-btn:disabled {
+  color: var(--muted);
+}
+
+/* 投稿ボタン */
+.submit-btn {
+  display: block;
+  width: 100%;
+  background: var(--ink-text);
+  color: var(--paper);
+  text-align: center;
+  padding: 13px 0;
+  border-radius: 9px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* 400字に届いていない間は押せない見た目にする */
+.submit-btn:disabled {
+  background: var(--paper-2);
+  color: var(--muted);
+}
+
+.submit-note {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--ink-text-soft);
+  text-align: center;
+  margin: 8px 0 0;
+}
+
+/* ── 10. 画面が小さいとき（スマホ実機など） ──
+   スマホ枠の飾りを消して、画面いっぱいに表示します。 */
+@media (max-width: 430px) {
+  body {
+    padding: 0;
+  }
+
+  .phone {
+    width: 100%;
+    height: 100vh;
+    max-height: none;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .screen {
+    border-radius: 0;
+  }
+}

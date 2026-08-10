@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>のぞきみ日記</title>
+
+    <!-- ブラウザのタブに出る小さなアイコン（画像ファイルを使わず直接書いています） -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314161F'/%3E%3Crect x='8' y='7' width='16' height='18' rx='2' fill='%23F6F1E7'/%3E%3Crect x='8' y='7' width='3' height='18' fill='%23B08D57'/%3E%3C/svg%3E"
+    />
+
+    <!--
+      ワイヤーフレームで使われているフォントを Google Fonts から読み込みます。
+      ・Klee One   … 日記の本文（手書き風の明朝）
+      ・Lora       … 画面タイトル
+      ・Inter      … ボタンなど UI の文字
+      ・IBM Plex Mono … 日付・タグなどの小さい文字
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Lora:wght@400;500;600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <!-- React がこの <div> の中にアプリ全体を描画します -->
+    <div id="root"></div>
+
+    <!-- アプリの入口となる JavaScript ファイル -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

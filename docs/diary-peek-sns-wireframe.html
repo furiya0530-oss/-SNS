@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>のぞきみ日記 - ワイヤーフレーム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-bg:#14161F;
+    --chrome:#1E2233;
+    --chrome-2:#262B41;
+    --paper:#F6F1E7;
+    --paper-2:#EFE7D6;
+    --ink-text:#2B2A28;
+    --ink-text-soft:#6B655A;
+    --off-white:#EDE8DC;
+    --off-white-soft:#B9B6AE;
+    --moss:#5C7A6B;
+    --moss-deep:#41594D;
+    --rose:#9C5468;
+    --gold:#B08D57;
+    --line:#DCD3BE;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink-bg);
+    font-family:'Inter',sans-serif;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    min-height:100vh;
+    padding:40px 16px;
+  }
+  .rig{
+    display:flex;
+    gap:28px;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:flex-start;
+  }
+  .frame-wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+  }
+  .frame-label{
+    color:var(--off-white-soft);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+  }
+  .phone{
+    width:340px;
+    height:700px;
+    background:var(--chrome);
+    border-radius:36px;
+    padding:12px;
+    box-shadow:0 30px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.04);
+    position:relative;
+  }
+  .screen{
+    width:100%;
+    height:100%;
+    background:var(--chrome);
+    border-radius:26px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+  }
+  .statusbar{
+    height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 20px;
+    color:var(--off-white);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    flex-shrink:0;
+  }
+  .topbar{
+    padding:6px 18px 14px;
+    flex-shrink:0;
+  }
+  .topbar-title{
+    font-family:'Lora',serif;
+    font-weight:600;
+    font-size:22px;
+    color:var(--off-white);
+    letter-spacing:.01em;
+  }
+  .topbar-sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--off-white-soft);
+    margin-top:2px;
+    letter-spacing:.05em;
+  }
+  .content{
+    flex:1;
+    overflow-y:auto;
+    background:var(--paper);
+    border-top-left-radius:20px;
+    border-top-right-radius:20px;
+    padding:16px 14px 90px;
+  }
+  .content::-webkit-scrollbar{display:none;}
+
+  /* tab bar */
+  .tabbar{
+    position:absolute;
+    bottom:12px;
+    left:12px;
+    right:12px;
+    height:60px;
+    background:var(--chrome-2);
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-around;
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  .tab{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    color:var(--off-white-soft);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9px;
+    letter-spacing:.03em;
+  }
+  .tab.active{ color:var(--moss); }
+  .tab svg{ width:19px; height:19px; }
+
+  /* theme banner */
+  .theme-banner{
+    background:linear-gradient(135deg,var(--moss-deep),var(--moss));
+    border-radius:14px;
+    padding:14px 16px;
+    margin-bottom:16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .theme-banner:before{
+    content:"";
+    position:absolute; top:-20px; right:-20px;
+    width:90px;height:90px;border-radius:50%;
+    background:rgba(255,255,255,.08);
+  }
+  .theme-eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9px;
+    letter-spacing:.12em;
+    color:rgba(255,255,255,.75);
+    text-transform:uppercase;
+  }
+  .theme-title{
+    font-family:'Klee One',serif;
+    font-weight:700;
+    font-size:20px;
+    color:#fff;
+    margin-top:4px;
+  }
+
+  /* diary card - library-card styled */
+  .card{
+    background:#fff;
+    border-radius:4px;
+    margin-bottom:16px;
+    box-shadow:0 3px 10px rgba(43,42,40,.10);
+    position:relative;
+    border-left:5px solid var(--gold);
+    overflow:hidden;
+  }
+  .card-inner{ padding:16px 16px 14px; }
+  .card-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:8px;
+  }
+  .persona{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    color:var(--ink-text-soft);
+    background:var(--paper-2);
+    padding:3px 8px;
+    border-radius:3px;
+    letter-spacing:.03em;
+  }
+  .persona b{ color:var(--ink-text); }
+  .card-date{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px;
+    color:var(--off-white-soft);
+    color:#B7ADA0;
+  }
+  .card-text{
+    font-family:'Klee One',serif;
+    font-size:15.5px;
+    line-height:1.95;
+    color:var(--ink-text);
+  }
+  .card-text.clamp{
+    display:-webkit-box;
+    -webkit-line-clamp:4;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .tags{
+    display:flex;
+    gap:6px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--moss-deep);
+    background:#EAF0EC;
+    padding:2px 7px;
+    border-radius:10px;
+  }
+  .card-bottom{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px dashed var(--line);
+  }
+  .stat{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-text-soft);
+  }
+  .stat svg{ width:14px;height:14px; }
+  .follow-btn{
+    margin-left:auto;
+    font-family:'Inter',sans-serif;
+    font-size:11px;
+    font-weight:600;
+    color:#fff;
+    background:var(--moss);
+    padding:5px 12px;
+    border-radius:20px;
+  }
+
+  .section-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-text-soft);
+    margin:4px 0 10px;
+  }
+
+  /* following list */
+  .follow-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 4px;
+    border-bottom:1px solid var(--line);
+  }
+  .avatar{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--moss-deep);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-family:'Klee One',serif;font-size:16px;
+    flex-shrink:0;
+  }
+  .follow-meta{ flex:1; min-width:0; }
+  .follow-name{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; color:var(--ink-text);
+  }
+  .follow-snippet{
+    font-family:'Klee One',serif;
+    font-size:13.5px;
+    color:var(--ink-text-soft);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    margin-top:2px;
+  }
+  .new-dot{ width:7px;height:7px;border-radius:50%;background:var(--rose); flex-shrink:0;}
+
+  /* post screen */
+  .field-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px; color:var(--ink-text-soft);
+    letter-spacing:.06em; margin-bottom:6px;
+  }
+  .toggle-row{
+    display:flex; gap:8px; margin-bottom:16px;
+  }
+  .toggle{
+    flex:1; text-align:center;
+    padding:8px 0;
+    border-radius:8px;
+    font-family:'Inter',sans-serif;
+    font-size:12px; font-weight:600;
+    border:1px solid var(--line);
+    color:var(--ink-text-soft);
+  }
+  .toggle.active{
+    background:var(--ink-text);
+    color:var(--paper);
+    border-color:var(--ink-text);
+  }
+  .editor{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:14px;
+    min-height:180px;
+    font-family:'Klee One',serif;
+    font-size:15px; line-height:2;
+    color:var(--ink-text);
+    margin-bottom:8px;
+  }
+  .editor .placeholder{ color:#B7ADA0; }
+  .char-count{
+    text-align:right;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px; color:var(--off-white-soft);
+    color:#B7ADA0;
+    margin-bottom:18px;
+  }
+  .hashtag-input{
+    display:flex; gap:6px; flex-wrap:wrap;
+    background:#fff; border:1px solid var(--line);
+    border-radius:8px; padding:10px;
+    margin-bottom:18px;
+  }
+  .hashtag-chip{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; color:var(--moss-deep);
+    background:#EAF0EC; padding:3px 8px; border-radius:10px;
+  }
+  .submit-btn{
+    background:var(--ink-text);
+    color:var(--paper);
+    text-align:center;
+    padding:13px 0;
+    border-radius:9px;
+    font-family:'Inter',sans-serif;
+    font-weight:700; font-size:13px;
+    letter-spacing:.02em;
+  }
+
+  /* notifications */
+  .notif{
+    display:flex; gap:10px; align-items:flex-start;
+    padding:11px 4px;
+    border-bottom:1px solid var(--line);
+  }
+  .notif-icon{
+    width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .notif-icon.heart{ background:#F4E6EA; color:var(--rose); }
+  .notif-icon.follow{ background:#EAF0EC; color:var(--moss-deep); }
+  .notif-icon.comment{ background:#EFEAE0; color:var(--gold); }
+  .notif-icon svg{ width:15px;height:15px; }
+  .notif-text{
+    font-family:'Inter',sans-serif;
+    font-size:12.5px; color:var(--ink-text);
+    line-height:1.5;
+  }
+  .notif-time{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px; color:#B7ADA0;
+    margin-top:2px;
+  }
+
+  /* mypage */
+  .profile-head{
+    display:flex; align-items:center; gap:12px;
+    margin-bottom:18px;
+  }
+  .profile-avatar{
+    width:56px;height:56px;border-radius:50%;
+    background:var(--gold);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff; font-family:'Klee One',serif;font-size:23px;
+  }
+  .profile-name{ font-family:'Klee One',serif; font-size:18px; color:var(--ink-text); }
+  .profile-meta{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px; color:var(--ink-text-soft); margin-top:3px;
+  }
+  .status-card{
+    background:#fff; border:1px solid var(--line);
+    border-radius:10px; padding:14px;
+    margin-bottom:16px;
+  }
+  .status-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--moss-deep); margin-bottom:8px;
+  }
+  .progress-track{
+    height:6px; background:var(--paper-2); border-radius:3px; overflow:hidden;
+    margin-bottom:6px;
+  }
+  .progress-fill{ height:100%; background:var(--moss); border-radius:3px; }
+  .status-note{
+    font-family:'Inter',sans-serif; font-size:11.5px; color:var(--ink-text-soft);
+  }
+  .settings-row{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 4px; border-bottom:1px solid var(--line);
+    font-family:'Inter',sans-serif; font-size:13px; color:var(--ink-text);
+  }
+  .settings-row span.chev{ color:#B7ADA0; }
+
+  /* detail modal */
+  .detail-overlay{
+    position:absolute; inset:0;
+    background:rgba(20,22,31,.55);
+    display:flex; align-items:flex-end;
+    border-radius:26px;
+  }
+  .detail-sheet{
+    background:var(--paper);
+    width:100%;
+    max-height:88%;
+    border-top-left-radius:22px;
+    border-top-right-radius:22px;
+    padding:14px 16px 90px;
+    overflow-y:auto;
+  }
+  .sheet-handle{
+    width:36px;height:4px;background:var(--line);
+    border-radius:2px; margin:0 auto 14px;
+  }
+  .report-link{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px; color:#B7ADA0;
+    display:flex; align-items:center; gap:4px;
+    margin-top:14px;
+  }
+  .divider-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-text-soft);
+    margin:18px 0 10px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .divider-label:before,.divider-label:after{
+    content:""; flex:1; height:1px; background:var(--line);
+  }
+  .comment-row{
+    display:flex; gap:10px; margin-bottom:12px;
+  }
+  .comment-stamp{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px; font-weight:600;
+    color:var(--moss-deep);
+    border:1px solid var(--moss-deep);
+    border-radius:4px;
+    padding:2px 6px;
+    height:fit-content;
+    transform:rotate(-3deg);
+    flex-shrink:0;
+  }
+  .comment-body{
+    font-family:'Inter',sans-serif; font-size:12.5px; color:var(--ink-text);
+    background:#fff; border-radius:8px; padding:8px 10px;
+    flex:1;
+  }
+  .stamp-only-note{
+    font-family:'Inter',sans-serif; font-size:11px; color:var(--ink-text-soft);
+    background:var(--paper-2); border-radius:8px; padding:10px 12px;
+    margin-top:6px;
+    display:flex; align-items:center; gap:8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="rig">
+
+  <!-- SCREEN 1: 発見 -->
+  <div class="frame-wrap">
+    <div class="frame-label">01 — 発見</div>
+    <div class="phone"><div class="screen">
+      <div class="statusbar"><span>9:41</span><span>のぞきみ日記</span></div>
+      <div class="topbar">
+        <div class="topbar-title">発見</div>
+        <div class="topbar-sub">スワイプして次の日記へ</div>
+      </div>
+      <div class="content">
+        <div class="theme-banner">
+          <div class="theme-eyebrow">今週のお題</div>
+          <div class="theme-title">「忘れられない一日」</div>
+        </div>
+
+        <div class="card">
+          <div class="card-inner">
+            <div class="card-top">
+              <div class="persona">読者ペルソナ <b>#0472</b></div>
+              <div class="card-date">3時間前</div>
+            </div>
+            <div class="card-text clamp">
+              雨の匂いがすると、いつもあの夏を思い出す。傘を忘れて、駅で立ち往生していたら、隣にいた見知らぬ人が黙って半分だけ傘をさしかけてくれた。名前も聞かないまま別れたけれど、今でも雨の日はその人を探してしまう自分がいる。
+            </div>
+            <div class="tags">
+              <span class="tag">#忘れられない一日</span>
+              <span class="tag">#雨</span>
+            </div>
+            <div class="card-bottom">
+              <div class="stat">♡ 214</div>
+              <div class="stat">💬 12</div>
+              <div class="follow-btn">追いかける</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="opacity:.55; transform:scale(.97);">
+          <div class="card-inner">
+            <div class="card-top">
+              <div class="persona">読者ペルソナ <b>#1839</b></div>
+              <div class="card-date">6時間前</div>
+            </div>
+            <div class="card-text clamp">
+              仕事を辞めた日のことを、誰にも話していない。家族にも、友人にも。ただこの日記にだけは、正直に書いておこうと思う。怖かった。でも、少しだけほっとしている自分もいた。
+            </div>
+            <div class="tags"><span class="tag">#転機</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab active">🔎<div>発見</div></div>
+        <div class="tab">📖<div>追いかけ中</div></div>
+        <div class="tab">✎<div>投稿</div></div>
+        <div class="tab">🔔<div>通知</div></div>
+        <div class="tab">◯<div>マイページ</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- SCREEN 2: 追いかけ中 -->
+  <div class="frame-wrap">
+    <div class="frame-label">02 — 追いかけ中</div>
+    <div class="phone"><div class="screen">
+      <div class="statusbar"><span>9:41</span><span>のぞきみ日記</span></div>
+      <div class="topbar">
+        <div class="topbar-title">追いかけ中</div>
+        <div class="topbar-sub">だいたい 18人 を追いかけています</div>
+      </div>
+      <div class="content">
+        <div class="section-label">新着</div>
+
+        <div class="follow-row">
+          <div class="avatar">A</div>
+          <div class="follow-meta">
+            <div class="follow-name">#0472</div>
+            <div class="follow-snippet">今日は久しぶりに祖母の家に行った。庭の紫陽花が…</div>
+          </div>
+          <div class="new-dot"></div>
+        </div>
+        <div class="follow-row">
+          <div class="avatar">B</div>
+          <div class="follow-meta">
+            <div class="follow-name">#2210</div>
+            <div class="follow-snippet">深夜3時、まだ眠れない。こういう夜は決まって…</div>
+          </div>
+          <div class="new-dot"></div>
+        </div>
+        <div class="follow-row">
+          <div class="avatar">C</div>
+          <div class="follow-meta">
+            <div class="follow-name">#0093</div>
+            <div class="follow-snippet">引っ越しの荷造りをしていたら、昔の手紙が出てきた</div>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top:18px;">今週は更新なし</div>
+        <div class="follow-row">
+          <div class="avatar" style="background:#C9C2B3;">D</div>
+          <div class="follow-meta">
+            <div class="follow-name">#1120</div>
+            <div class="follow-snippet" style="color:#B7ADA0;">最終更新から9日</div>
+          </div>
+        </div>
+        <div class="follow-row">
+          <div class="avatar" style="background:#C9C2B3;">E</div>
+          <div class="follow-meta">
+            <div class="follow-name">#3387</div>
+            <div class="follow-snippet" style="color:#B7ADA0;">最終更新から14日</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab">🔎<div>発見</div></div>
+        <div class="tab active">📖<div>追いかけ中</div></div>
+        <div class="tab">✎<div>投稿</div></div>
+        <div class="tab">🔔<div>通知</div></div>
+        <div class="tab">◯<div>マイページ</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- SCREEN 3: 投稿 -->
+  <div class="frame-wrap">
+    <div class="frame-label">03 — 投稿</div>
+    <div class="phone"><div class="screen">
+      <div class="statusbar"><span>9:41</span><span>のぞきみ日記</span></div>
+      <div class="topbar">
+        <div class="topbar-title">投稿</div>
+        <div class="topbar-sub">今日の出来事を書きとめる</div>
+      </div>
+      <div class="content">
+        <div class="field-label">テーマ</div>
+        <div class="toggle-row">
+          <div class="toggle active">自由テーマ</div>
+          <div class="toggle">お題「忘れられない一日」</div>
+        </div>
+
+        <div class="field-label">本文</div>
+        <div class="editor">
+          <span class="placeholder">今日の出来事、思ったこと、誰にも言えなかったこと──。長い文章ほど、誰かの心に残ります。</span>
+        </div>
+        <div class="char-count">0 / 最低400字から投稿できます</div>
+
+        <div class="field-label">ハッシュタグ（最大5個）</div>
+        <div class="hashtag-input">
+          <span class="hashtag-chip">#日常</span>
+          <span class="hashtag-chip">#夜</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B7ADA0;">+ 追加</span>
+        </div>
+
+        <div class="submit-btn">日記を投稿する</div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab">🔎<div>発見</div></div>
+        <div class="tab">📖<div>追いかけ中</div></div>
+        <div class="tab active">✎<div>投稿</div></div>
+        <div class="tab">🔔<div>通知</div></div>
+        <div class="tab">◯<div>マイページ</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- SCREEN 4: 通知 -->
+  <div class="frame-wrap">
+    <div class="frame-label">04 — 通知</div>
+    <div class="phone"><div class="screen">
+      <div class="statusbar"><span>9:41</span><span>のぞきみ日記</span></div>
+      <div class="topbar">
+        <div class="topbar-title">通知</div>
+      </div>
+      <div class="content">
+        <div class="notif">
+          <div class="notif-icon heart">♡</div>
+          <div>
+            <div class="notif-text"><b>読者A</b> があなたの日記にいいねしました</div>
+            <div class="notif-time">12分前</div>
+          </div>
+        </div>
+        <div class="notif">
+          <div class="notif-icon follow">＋</div>
+          <div>
+            <div class="notif-text">誰かがあなたを追いかけ始めました</div>
+            <div class="notif-time">1時間前</div>
+          </div>
+        </div>
+        <div class="notif">
+          <div class="notif-icon comment">✎</div>
+          <div>
+            <div class="notif-text"><b>読者C</b> があなたの日記にコメントしました：「わかります、私も同じ経験が…」</div>
+            <div class="notif-time">3時間前</div>
+          </div>
+        </div>
+        <div class="notif">
+          <div class="notif-icon heart">♡</div>
+          <div>
+            <div class="notif-text">お題「忘れられない一日」の投稿に14件のいいねが集まりました</div>
+            <div class="notif-time">昨日</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab">🔎<div>発見</div></div>
+        <div class="tab">📖<div>追いかけ中</div></div>
+        <div class="tab">✎<div>投稿</div></div>
+        <div class="tab active">🔔<div>通知</div></div>
+        <div class="tab">◯<div>マイページ</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- SCREEN 5: マイページ -->
+  <div class="frame-wrap">
+    <div class="frame-label">05 — マイページ</div>
+    <div class="phone"><div class="screen">
+      <div class="statusbar"><span>9:41</span><span>のぞきみ日記</span></div>
+      <div class="topbar">
+        <div class="topbar-title">マイページ</div>
+      </div>
+      <div class="content">
+        <div class="profile-head">
+          <div class="profile-avatar">M</div>
+          <div>
+            <div class="profile-name">読者ペルソナ #0847</div>
+            <div class="profile-meta">投稿 7本 ・ だいたい 32人 が追いかけています</div>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-title">コメント権ステータス</div>
+          <div class="progress-track"><div class="progress-fill" style="width:100%;"></div></div>
+          <div class="status-note">獲得済み（累計7本投稿）・ 休止まであと 24日</div>
+        </div>
+
+        <div class="section-label">設定</div>
+        <div class="settings-row"><span>自分の投稿一覧</span><span class="chev">›</span></div>
+        <div class="settings-row"><span>通報履歴</span><span class="chev">›</span></div>
+        <div class="settings-row"><span>ブロックリスト</span><span class="chev">›</span></div>
+        <div class="settings-row"><span>お題を提案する</span><span class="chev">›</span></div>
+        <div class="settings-row"><span>アカウント設定</span><span class="chev">›</span></div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab">🔎<div>発見</div></div>
+        <div class="tab">📖<div>追いかけ中</div></div>
+        <div class="tab">✎<div>投稿</div></div>
+        <div class="tab">🔔<div>通知</div></div>
+        <div class="tab active">◯<div>マイページ</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- SCREEN 6: 日記詳細（コメント欄） -->
+  <div class="frame-wrap">
+    <div class="frame-label">06 — 日記詳細 / コメント</div>
+    <div class="phone"><div class="screen">
+      <div class="statusbar"><span>9:41</span><span>のぞきみ日記</span></div>
+      <div class="topbar"><div class="topbar-title">発見</div></div>
+      <div class="content" style="filter:blur(1px); opacity:.5;">
+        <div class="card"><div class="card-inner"><div class="card-text clamp">雨の匂いがすると、いつもあの夏を思い出す…</div></div></div>
+      </div>
+
+      <div class="detail-overlay">
+        <div class="detail-sheet">
+          <div class="sheet-handle"></div>
+          <div class="persona" style="margin-bottom:10px;">読者ペルソナ <b>#0472</b></div>
+          <div class="card-text">
+            雨の匂いがすると、いつもあの夏を思い出す。傘を忘れて、駅で立ち往生していたら、隣にいた見知らぬ人が黙って半分だけ傘をさしかけてくれた。名前も聞かないまま別れたけれど、今でも雨の日はその人を探してしまう自分がいる。（本文つづく…）
+          </div>
+          <div class="tags"><span class="tag">#忘れられない一日</span><span class="tag">#雨</span></div>
+          <div class="card-bottom" style="border-top:1px dashed var(--line);">
+            <div class="stat">♡ 214</div>
+            <div class="follow-btn">追いかける</div>
+          </div>
+
+          <div class="divider-label">コメント 12件</div>
+
+          <div class="comment-row">
+            <div class="comment-stamp">読者A</div>
+            <div class="comment-body">わかります。私も似た経験があって、今でも時々思い出します。</div>
+          </div>
+          <div class="comment-row">
+            <div class="comment-stamp">読者F</div>
+            <div class="comment-body">文章がとても綺麗で、情景が目に浮かびました。</div>
+          </div>
+
+          <div class="stamp-only-note">
+            🔒 コメントは投稿を続けている読者のみ。あなたはスタンプで応援できます → 🤍 😢 ✨
+          </div>
+
+          <div class="report-link">⚑ この日記を通報する</div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+</body>
+</html>

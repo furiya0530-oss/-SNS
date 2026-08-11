@@ -43,6 +43,19 @@ body {
   padding: 24px 16px;
 }
 
+/*
+  Reactが描画する土台の<div id="root">には、既定では横幅の指定がない。
+  すると本文欄（<textarea>）は「20文字ぶん」というブラウザ既定の目安幅を
+  基準にレイアウト全体の横幅を決めてしまい、投稿タブだけスマホの幅より
+  かなり狭く縮んでしまう（発見タブは長文が折り返すため起きない）。
+  #root にはっきり幅を持たせておくことで、この目安幅を使わせないようにする。
+*/
+#root {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
 button {
   font-family: inherit;
   cursor: pointer;
@@ -59,6 +72,7 @@ button:disabled {
 /* ── 3. スマホ枠 ───────────────────────────── */
 .phone {
   width: 380px;
+  flex-shrink: 0;
   height: 760px;
   max-height: calc(100vh - 48px);
   background: var(--chrome);
@@ -491,9 +505,14 @@ button:disabled {
   margin: 8px 0 0;
 }
 
-/* ── 10. 画面が小さいとき（スマホ実機など） ──
-   スマホ枠の飾りを消して、画面いっぱいに表示します。 */
-@media (max-width: 430px) {
+/* ── 10. スマホ・タブレット実機のとき ──
+   スマホ枠の飾りを消して、画面いっぱいに表示します。
+   画面の横幅（px数）ではなく「指で操作する端末かどうか」で判定する。
+   iPhone Pro Max など横幅が430pxを超える大きめの機種でも、
+   タッチ操作の端末であれば同じように全画面表示にするため。
+   （pointer: coarse は指タッチ、max-width は念のためマウス操作の
+   狭いウィンドウでも同じ見た目になるようにする保険） */
+@media (pointer: coarse), (max-width: 430px) {
   body {
     padding: 0;
   }

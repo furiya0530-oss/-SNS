@@ -12,8 +12,9 @@ import { formatRelativeTime } from '../utils/time.js'
 /**
  * @param {object}   post         日記1件のデータ
  * @param {Function} onToggleLike いいねが押されたときに呼ぶ関数
+ * @param {Function} onOpenDetail 「コメント」が押されたとき、詳細画面を開くために呼ぶ関数
  */
-export default function DiaryCard({ post, onToggleLike }) {
+export default function DiaryCard({ post, onToggleLike, onOpenDetail }) {
   // 本文をすべて表示しているかどうか。最初は折りたたんだ状態（false）。
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -61,6 +62,11 @@ export default function DiaryCard({ post, onToggleLike }) {
           >
             <span className="like-icon">{post.liked ? '♥' : '♡'}</span>
             <span className="like-count">{post.likes}</span>
+          </button>
+
+          <button type="button" className="comment-count-btn" onClick={() => onOpenDetail(post.id)}>
+            <span className="comment-icon">💬</span>
+            <span className="comment-count">{post.comments.length}</span>
           </button>
         </div>
       </div>

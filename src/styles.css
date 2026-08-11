@@ -340,6 +340,28 @@ button:disabled {
   color: var(--rose);
 }
 
+/* コメント数ボタン（見た目は いいねボタン と揃える） */
+.comment-count-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-text-soft);
+  padding: 4px 10px 4px 8px;
+  border-radius: 20px;
+  transition: background 0.15s;
+}
+
+.comment-count-btn:hover {
+  background: var(--paper-2);
+}
+
+.comment-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
 .empty-note {
   font-family: 'Klee One', serif;
   font-size: 14px;
@@ -697,6 +719,192 @@ button:disabled {
 
 .settings-row .chev {
   color: var(--muted);
+}
+
+/* ── 15. 日記詳細（コメント欄）シート ─────── */
+
+/* 画面全体に重ねる、半透明の背景 */
+.detail-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 22, 31, 0.55);
+  display: flex;
+  align-items: flex-end;
+  z-index: 10;
+}
+
+/* 下からせり上がってくる、本体のシート */
+.detail-sheet {
+  background: var(--paper);
+  width: 100%;
+  max-height: 88%;
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  padding: 14px 16px 24px;
+  overflow-y: auto;
+}
+
+/* シート上部の、つまみのような横棒（見た目だけの飾り） */
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
+  margin: 0 auto 14px;
+}
+
+.persona-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.divider-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-text-soft);
+  margin: 18px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 見出しの左右に線を伸ばして「区切り」らしく見せる */
+.divider-label::before,
+.divider-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* スタンプ（コメント権が無くても押せる軽いリアクション） */
+.stamp-row {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.stamp-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  transition: background 0.15s;
+}
+
+.stamp-btn:hover {
+  background: var(--paper-2);
+}
+
+.stamp-count {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-text-soft);
+}
+
+.comment-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* コメント投稿者の連番ID（例: 読者A）。付箋のように少し傾ける */
+.comment-stamp {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--moss-deep);
+  border: 1px solid var(--moss-deep);
+  border-radius: 4px;
+  padding: 2px 6px;
+  height: fit-content;
+  transform: rotate(-3deg);
+  flex-shrink: 0;
+}
+
+.comment-body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  color: var(--ink-text);
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  flex: 1;
+}
+
+/* コメント権が無い人向けの案内文 */
+.stamp-only-note {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  color: var(--ink-text-soft);
+  background: var(--paper-2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+
+/* コメント権がある人向けの入力フォーム */
+.comment-composer {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 6px;
+}
+
+.comment-input {
+  flex: 1;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12.5px;
+  color: var(--ink-text);
+  resize: none;
+  min-height: 40px;
+}
+
+.comment-input:focus {
+  outline: 2px solid var(--moss);
+  outline-offset: -1px;
+}
+
+.comment-submit-btn {
+  background: var(--ink-text);
+  color: var(--paper);
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.comment-submit-btn:disabled {
+  background: var(--paper-2);
+  color: var(--muted);
+}
+
+/* 通報リンク */
+.report-link {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 18px;
+}
+
+.report-link:disabled {
+  cursor: default;
 }
 
 /* ── 10. スマホ・タブレット実機のとき ──

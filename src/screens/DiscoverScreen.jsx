@@ -10,8 +10,12 @@ import { WEEKLY_THEME } from '../constants.js'
 /**
  * @param {object[]} posts        表示する日記の配列
  * @param {Function} onToggleLike いいねが押されたときに呼ぶ関数
+ * @param {Function} onOpenDetail 日記のコメント欄を開くときに呼ぶ関数
  */
-export default function DiscoverScreen({ posts, onToggleLike }) {
+export default function DiscoverScreen({ posts, onToggleLike, onOpenDetail }) {
+  // 通報が3件たまって非表示になった日記は、発見画面には出さない
+  const visiblePosts = posts.filter((post) => !post.hidden)
+
   return (
     <>
       {/* 画面上部のタイトル */}
@@ -32,12 +36,12 @@ export default function DiscoverScreen({ posts, onToggleLike }) {
           配列を map() で回して、日記1件ごとに DiaryCard を作ります。
           key には他と重複しない値（ここでは id）を必ず渡します。
         */}
-        {posts.map((post) => (
-          <DiaryCard key={post.id} post={post} onToggleLike={onToggleLike} />
+        {visiblePosts.map((post) => (
+          <DiaryCard key={post.id} post={post} onToggleLike={onToggleLike} onOpenDetail={onOpenDetail} />
         ))}
 
         {/* 1件も無いときの案内 */}
-        {posts.length === 0 && (
+        {visiblePosts.length === 0 && (
           <p className="empty-note">まだ日記がありません。最初の1本を書いてみませんか。</p>
         )}
       </div>

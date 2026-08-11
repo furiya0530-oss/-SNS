@@ -13,6 +13,7 @@ import { useState, useEffect } from 'react'
 
 import PhoneFrame from './components/PhoneFrame.jsx'
 import TabBar from './components/TabBar.jsx'
+import DiaryDetailSheet from './components/DiaryDetailSheet.jsx'
 import DiscoverScreen from './screens/DiscoverScreen.jsx'
 import PostScreen from './screens/PostScreen.jsx'
 import FollowingScreen from './screens/FollowingScreen.jsx'
@@ -20,6 +21,7 @@ import NotificationScreen from './screens/NotificationScreen.jsx'
 import MyPageScreen from './screens/MyPageScreen.jsx'
 import samplePosts from './data/samplePosts.js'
 import { loadPosts, savePosts } from './utils/storage.js'
+import { COMMENT_RIGHT_POST_THRESHOLD, REPORT_HIDE_THRESHOLD } from './constants.js'
 
 /** ログイン機能ができるまでの、仮の「自分」の匿名ペルソナ番号 */
 const MY_PERSONA = '#0847'
@@ -35,6 +37,10 @@ export default function App() {
 
   // 【state その2】今表示しているタブ
   const [activeTab, setActiveTab] = useState('discover')
+
+  // 【state その3】詳細画面（コメント欄）を開いている日記の id。
+  // null のときは詳細画面を閉じている状態を表す。
+  const [openPostId, setOpenPostId] = useState(null)
 
   // posts が変化するたびに、localStorage へ保存し直す。
   // こうしておくことで、投稿やいいねの結果がページ再読み込み後も残る。
@@ -81,6 +87,10 @@ export default function App() {
       createdAt: Date.now(),
       likes: 0,
       liked: false,
+      comments: [],
+      stamps: { heart: 0, cry: 0, sparkle: 0 },
+      reportCount: 0,
+      hidden: false,
     }
 
     // 新しい日記を配列の「先頭」に足して、一覧の一番上に表示させる
@@ -90,14 +100,69 @@ export default function App() {
     setActiveTab('discover')
   }
 
+  /** コメントを1件追加する（コメント権がある人だけが呼び出せる想定） */
+  function handleAddComment(postId, body) {
+    const newComment = {
+      id: `comment-${Date.now()}`,
+      // このアプリには複数ユーザーのログインが無いので、
+      // 自分のコメントには固定で「あなた」というラベルを付ける
+      author: 'あなた',
+      body,
+      createdAt: Date.now(),
+    }
+
+    setPosts((currentPosts) =>
+      currentPosts.map((post) =>
+        post.id === postId ? { ...post, comments: [...post.comments, newComment] } : post,
+      ),
+    )
+  }
+
+  /** スタンプ（🤍 😢 ✨）を押したときの処理。押すたびに1増える */
+  function handleAddStamp(postId, stampType) {
+    setPosts((currentPosts) =>
+      currentPosts.map((post) =>
+        post.id === postId
+          ? { ...post, stamps: { ...post.stamps, [stampType]: post.stamps[stampType] + 1 } }
+          : post,
+      ),
+    )
+  }
+
+  /**
+   * 通報ボタンが押されたときの処理。
+   * 通報が REPORT_HIDE_THRESHOLD 件たまったら、一覧から自動的に隠す
+   * （仕様書どおり、削除ではなく「運営確認待ち」の非表示状態にする）。
+   */
+  function handleReportPost(postId) {
+    setPosts((currentPosts) =>
+      currentPosts.map((post) => {
+        if (post.id !== postId) return post
+
+        const reportCount = post.reportCount + 1
+        return {
+          ...post,
+          reportCount,
+          hidden: reportCount >= REPORT_HIDE_THRESHOLD,
+        }
+      }),
+    )
+  }
+
   // マイページで使う「自分の投稿数」。posts の中から自分のものだけ数える
   const myPostCount = posts.filter((post) => post.persona === MY_PERSONA).length
+
+  // 仕様書のルール：累計5本投稿するとコメント権がもらえる
+  const hasCommentRight = myPostCount >= COMMENT_RIGHT_POST_THRESHOLD
+
+  // 詳細画面を開いている日記のデータ本体（開いていなければ undefined）
+  const openPost = posts.find((post) => post.id === openPostId)
 
   return (
     <PhoneFrame>
       {/* activeTab の値によって、表示する画面を切り替える */}
       {activeTab === 'discover' && (
-        <DiscoverScreen posts={posts} onToggleLike={handleToggleLike} />
+        <DiscoverScreen posts={posts} onToggleLike={handleToggleLike} onOpenDetail={setOpenPostId} />
       )}
       {activeTab === 'following' && <FollowingScreen />}
       {activeTab === 'post' && <PostScreen onSubmit={handleAddPost} />}
@@ -108,6 +173,19 @@ export default function App() {
 
       {/* 画面下のタブバー（常に表示） */}
       <TabBar activeTab={activeTab} onChangeTab={setActiveTab} />
+
+      {/* 日記の詳細（コメント欄）。openPost があるときだけ、上に重ねて表示する */}
+      {openPost && (
+        <DiaryDetailSheet
+          post={openPost}
+          hasCommentRight={hasCommentRight}
+          onClose={() => setOpenPostId(null)}
+          onToggleLike={handleToggleLike}
+          onAddComment={handleAddComment}
+          onAddStamp={handleAddStamp}
+          onReport={handleReportPost}
+        />
+      )}
     </PhoneFrame>
   )
 }

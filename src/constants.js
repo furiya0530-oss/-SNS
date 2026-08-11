@@ -19,3 +19,6 @@ export const COMMENT_RIGHT_POST_THRESHOLD = 5
 
 /** マイページに表示する、自分のフォロワー数のゆるい目安（仕様どおり正確な数字ではない） */
 export const APPROX_FOLLOWER_COUNT = 32
+
+/** 投稿への通報がこの件数たまると、自動的に一覧から非表示になる（仕様書より） */
+export const REPORT_HIDE_THRESHOLD = 3

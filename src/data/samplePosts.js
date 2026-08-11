@@ -9,13 +9,18 @@
 /**
  * 1件の日記は、次の形のオブジェクトで表します。
  *
- *   id        … 日記を見分けるための番号（重複しない値）
- *   persona   … 匿名ペルソナの番号（本名は出さない仕様）
- *   body      … 日記の本文（長文）
- *   tags      … ハッシュタグの配列（最大5個）
- *   createdAt … 投稿日時。Date.now() と同じミリ秒の数値で持つ
- *   likes     … いいねの数
- *   liked     … 自分がいいね済みかどうか（true / false）
+ *   id          … 日記を見分けるための番号（重複しない値）
+ *   persona     … 匿名ペルソナの番号（本名は出さない仕様）
+ *   body        … 日記の本文（長文）
+ *   tags        … ハッシュタグの配列（最大5個）
+ *   createdAt   … 投稿日時。Date.now() と同じミリ秒の数値で持つ
+ *   likes       … いいねの数
+ *   liked       … 自分がいいね済みかどうか（true / false）
+ *   comments    … コメントの配列（{ id, author, body, createdAt }）
+ *   stamps      … コメント権が無い読者でも押せる軽いリアクションの数
+ *                 （{ heart: 数, cry: 数, sparkle: 数 }）
+ *   reportCount … 通報された件数
+ *   hidden      … 通報が3件たまって自動非表示になっているか
  */
 
 // 「◯時間前」と表示させるため、今の時刻を基準に少し過去の日時を作る
@@ -39,6 +44,23 @@ const samplePosts = [
     createdAt: now - 3 * HOUR,
     likes: 214,
     liked: false,
+    comments: [
+      {
+        id: 'c1',
+        author: '読者A',
+        body: 'わかります。私も似た経験があって、今でも時々思い出します。',
+        createdAt: now - 2 * HOUR,
+      },
+      {
+        id: 'c2',
+        author: '読者F',
+        body: '文章がとても綺麗で、情景が目に浮かびました。',
+        createdAt: now - 1 * HOUR,
+      },
+    ],
+    stamps: { heart: 12, cry: 3, sparkle: 8 },
+    reportCount: 0,
+    hidden: false,
   },
   {
     id: 'sample-2',
@@ -58,6 +80,10 @@ const samplePosts = [
     createdAt: now - 6 * HOUR,
     likes: 88,
     liked: false,
+    comments: [],
+    stamps: { heart: 4, cry: 1, sparkle: 2 },
+    reportCount: 0,
+    hidden: false,
   },
   {
     id: 'sample-3',
@@ -77,6 +103,10 @@ const samplePosts = [
     createdAt: now - 22 * HOUR,
     likes: 342,
     liked: false,
+    comments: [],
+    stamps: { heart: 20, cry: 6, sparkle: 15 },
+    reportCount: 0,
+    hidden: false,
   },
 ]
 

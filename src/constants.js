@@ -13,3 +13,9 @@ export const MAX_TAGS = 5
 
 /** 今週の運営お題（今は固定の文字列。将来はサーバーから取得する想定） */
 export const WEEKLY_THEME = '忘れられない一日'
+
+/** コメント権がもらえる、累計投稿数のライン（仕様書より） */
+export const COMMENT_RIGHT_POST_THRESHOLD = 5
+
+/** マイページに表示する、自分のフォロワー数のゆるい目安（仕様どおり正確な数字ではない） */
+export const APPROX_FOLLOWER_COUNT = 32

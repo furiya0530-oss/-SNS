@@ -1,18 +1,16 @@
 // ────────────────────────────────────────────────
 // 画面下のタブバー
 //
-// 今回作ったのは「発見」と「投稿」の2画面だけなので、
-// それ以外のタブは押せない状態（準備中）にしてあります。
-// 画面を作ったら enabled を true にすれば、そのまま使えます。
+// 5つのタブすべてに画面が用意されているので、どれでも押せます。
 // ────────────────────────────────────────────────
 
 // タブの一覧をデータとして持っておくと、JSX 側が短く書けます
 const TABS = [
-  { id: 'discover', label: '発見', icon: '🔎', enabled: true },
-  { id: 'following', label: '追いかけ中', icon: '📖', enabled: false },
-  { id: 'post', label: '投稿', icon: '✎', enabled: true },
-  { id: 'notification', label: '通知', icon: '🔔', enabled: false },
-  { id: 'mypage', label: 'マイページ', icon: '◯', enabled: false },
+  { id: 'discover', label: '発見', icon: '🔎' },
+  { id: 'following', label: '追いかけ中', icon: '📖' },
+  { id: 'post', label: '投稿', icon: '✎' },
+  { id: 'notification', label: '通知', icon: '🔔' },
+  { id: 'mypage', label: 'マイページ', icon: '◯' },
 ]
 
 /**
@@ -28,8 +26,7 @@ export default function TabBar({ activeTab, onChangeTab }) {
           type="button"
           // 選択中のタブには active クラスを付けて色を変える
           className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-          disabled={!tab.enabled}
-          title={tab.enabled ? tab.label : `${tab.label}（準備中）`}
+          title={tab.label}
           onClick={() => onChangeTab(tab.id)}
         >
           <span className="tab-icon">{tab.icon}</span>

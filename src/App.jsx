@@ -3,30 +3,44 @@
 //
 // このファイルの役割は大きく2つです。
 //   1. 日記データ（posts）を state として持ち、増やしたり更新したりする
+//      （ブラウザの localStorage にも保存し、再読み込みしても消えないようにする）
 //   2. 今どの画面（タブ）を表示するかを切り替える
 //
 // 「データを持つ場所」を App に集約しておくと、
-// 発見画面と投稿画面の両方から同じデータを扱えます。
+// 各画面から同じデータを扱えます。
 // ────────────────────────────────────────────────
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import PhoneFrame from './components/PhoneFrame.jsx'
 import TabBar from './components/TabBar.jsx'
 import DiscoverScreen from './screens/DiscoverScreen.jsx'
 import PostScreen from './screens/PostScreen.jsx'
+import FollowingScreen from './screens/FollowingScreen.jsx'
+import NotificationScreen from './screens/NotificationScreen.jsx'
+import MyPageScreen from './screens/MyPageScreen.jsx'
 import samplePosts from './data/samplePosts.js'
+import { loadPosts, savePosts } from './utils/storage.js'
 
 /** ログイン機能ができるまでの、仮の「自分」の匿名ペルソナ番号 */
 const MY_PERSONA = '#0847'
 
 export default function App() {
-  // 【state その1】日記の一覧。最初はサンプルデータが入っている。
-  //   posts     … 今の日記一覧（配列）
-  //   setPosts  … 日記一覧を新しい内容に差し替える関数
-  const [posts, setPosts] = useState(samplePosts)
+  // 【state その1】日記の一覧。
+  //
+  // useState に「値」ではなく「関数」を渡すと、React は最初の1回だけ
+  // その関数を実行して初期値を決めます（これを「遅延初期化」と呼びます）。
+  // ここでは「localStorage に保存済みのデータがあればそれを使い、
+  // 無ければサンプルデータを使う」という判断をしています。
+  const [posts, setPosts] = useState(() => loadPosts() ?? samplePosts)
 
-  // 【state その2】今表示しているタブ（'discover' か 'post'）
+  // 【state その2】今表示しているタブ
   const [activeTab, setActiveTab] = useState('discover')
+
+  // posts が変化するたびに、localStorage へ保存し直す。
+  // こうしておくことで、投稿やいいねの結果がページ再読み込み後も残る。
+  useEffect(() => {
+    savePosts(posts)
+  }, [posts])
 
   /**
    * いいねボタンが押されたときの処理。
@@ -76,13 +90,21 @@ export default function App() {
     setActiveTab('discover')
   }
 
+  // マイページで使う「自分の投稿数」。posts の中から自分のものだけ数える
+  const myPostCount = posts.filter((post) => post.persona === MY_PERSONA).length
+
   return (
     <PhoneFrame>
       {/* activeTab の値によって、表示する画面を切り替える */}
       {activeTab === 'discover' && (
         <DiscoverScreen posts={posts} onToggleLike={handleToggleLike} />
       )}
+      {activeTab === 'following' && <FollowingScreen />}
       {activeTab === 'post' && <PostScreen onSubmit={handleAddPost} />}
+      {activeTab === 'notification' && <NotificationScreen />}
+      {activeTab === 'mypage' && (
+        <MyPageScreen myPersona={MY_PERSONA} myPostCount={myPostCount} />
+      )}
 
       {/* 画面下のタブバー（常に表示） */}
       <TabBar activeTab={activeTab} onChangeTab={setActiveTab} />

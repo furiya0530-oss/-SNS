@@ -1,0 +1,15 @@
+/* Tailwind CSS 本体を読み込む1行（v4 の書き方）。
+   これだけで text-xl や bg-blue-500 などのクラスが使えるようになります。 */
+@import "tailwindcss";
+
+/* アプリ全体の基本設定 */
+html {
+  /* ページ内リンク移動などをなめらかに */
+  scroll-behavior: smooth;
+}
+
+body {
+  /* 日本語が読みやすいフォント指定 */
+  font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP",
+    "Yu Gothic UI", sans-serif;
+}

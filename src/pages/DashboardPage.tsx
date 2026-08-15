@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
-import { demoItems, demoProperties, isDemoMode } from '@/lib/demo'
+import { demoItems, isDemoMode } from '@/lib/demo'
 import { useProfile } from '@/hooks/useProfile'
+import { useProperties } from '@/hooks/useProperties'
 
 export function DashboardPage() {
   const { profile } = useProfile()
+  const { properties } = useProperties()
 
-  // TODO: Supabase から実データを取得する処理に差し替える
-  const properties = isDemoMode ? demoProperties : []
+  // TODO: 備品も Supabase から取得する (次フェーズ)
   const items = isDemoMode ? demoItems : []
   const lowStockItems = items.filter((item) => item.quantity < item.threshold)
 
@@ -57,7 +58,14 @@ export function DashboardPage() {
 
         {properties.length === 0 ? (
           <EmptyState>
-            まだ物件が登録されていません。物件を追加すると、ここに一覧が表示されます。
+            まだ物件が登録されていません。
+            <Link
+              to="/properties"
+              className="ml-1 font-medium text-slate-700 underline underline-offset-2"
+            >
+              物件ページ
+            </Link>
+            から登録できます。
           </EmptyState>
         ) : (
           <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">

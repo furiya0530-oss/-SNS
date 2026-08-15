@@ -85,6 +85,17 @@ Supabase ダッシュボードの **Authentication > Providers > Email** で
 「Confirm email」を有効にしている場合は、確認メールのリンクを開くまで
 ログインが完了しません。ローカルで手早く試したい場合はこの設定を切ってください。
 
+### プランによる制限
+
+無料プラン (`plan = 'free'`) のユーザーが登録できる物件は 1 件までです。
+画面側で 2 件目の登録を止めるだけでなく、**DB のトリガーでも同じ制限**をかけています
+(`supabase/migrations/20260815010000_free_plan_property_limit.sql`)。
+画面のチェックは API を直接叩けば回避できるためです。
+
+上限値は SQL の `public.free_plan_property_limit()` と
+`src/lib/planLimits.ts` の `FREE_PLAN_PROPERTY_LIMIT` の 2 箇所にあります。
+変更するときは両方揃えてください。
+
 型定義 (`src/types/database.ts`) はスキーマと同じ形で手書きしています。
 CLI が使えるようになったら次のコマンドで置き換えられます。
 
@@ -146,6 +157,6 @@ src/
 - [x] 画面の雛形 (ダッシュボード / 物件 / 備品)
 - [x] デモモード (Supabase なしで画面を確認できる)
 - [x] Supabase のテーブル設計と RLS ポリシー
-- [ ] 物件の CRUD
+- [x] 物件の CRUD (無料プランは1件までの制限つき)
 - [ ] 備品と在庫増減の CRUD
 - [ ] Stripe サブスクリプション連携

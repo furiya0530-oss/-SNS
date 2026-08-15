@@ -50,6 +50,31 @@ npm run build:preview
 デモ関連のコードは `src/lib/demo.ts` に集約してあるので、
 実データの実装が入ったらこのファイルごと削除できます。
 
+## データベース (Supabase)
+
+スキーマは `supabase/migrations/` に SQL で置いています。
+
+```bash
+# Supabase CLI でリモートプロジェクトへ適用
+supabase link --project-ref <project-ref>
+supabase db push
+
+# ローカルの Supabase スタックで試す場合
+supabase start
+```
+
+CLI を使わない場合は、SQL の中身を Supabase ダッシュボードの
+**SQL Editor** に貼り付けて実行しても同じ結果になります。
+
+テーブル構成は以下の通りで、すべてのテーブルで RLS を有効化し、
+**ログインユーザーは自分が `owner_id` の物件に紐づくデータだけ**を読み書きできます。
+
+```
+profiles ── properties ─┬─ items
+                        ├─ checklists ── checklist_items
+                        └─ checklist_records ── checklist_record_details
+```
+
 ## npm スクリプト
 
 | コマンド | 内容 |
@@ -103,7 +128,7 @@ src/
 - [x] 認証 (マジックリンク) と保護ルート
 - [x] 画面の雛形 (ダッシュボード / 物件 / 備品)
 - [x] デモモード (Supabase なしで画面を確認できる)
-- [ ] Supabase のテーブル設計と RLS ポリシー
+- [x] Supabase のテーブル設計と RLS ポリシー
 - [ ] 物件の CRUD
 - [ ] 備品と在庫増減の CRUD
 - [ ] Stripe サブスクリプション連携

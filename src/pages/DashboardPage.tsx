@@ -1,11 +1,12 @@
+import { Link } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
 import { demoItems, demoProperties, isDemoMode } from '@/lib/demo'
-import { useSession } from '@/hooks/useSession'
+import { useProfile } from '@/hooks/useProfile'
 
 export function DashboardPage() {
-  const { user } = useSession()
+  const { profile } = useProfile()
 
-  // TODO: Supabase のテーブル作成後に実データへ差し替える
+  // TODO: Supabase から実データを取得する処理に差し替える
   const properties = isDemoMode ? demoProperties : []
   const items = isDemoMode ? demoItems : []
   const lowStockItems = items.filter((item) => item.quantity < item.threshold)
@@ -21,10 +22,12 @@ export function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">ダッシュボード</h1>
-        <p className="mt-1 text-sm text-slate-500">ログイン中: {user?.email}</p>
+        <p className="mt-1 text-sm text-slate-500">
+          {profile?.name ? `${profile.name} さん、こんにちは。` : 'ようこそ。'}
+        </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -42,11 +45,68 @@ export function DashboardPage() {
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-slate-900">補充が必要な備品</h2>
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-lg font-semibold text-slate-900">物件一覧</h2>
+          <Link
+            to="/properties"
+            className="text-sm font-medium text-slate-600 underline underline-offset-2 hover:text-slate-900"
+          >
+            すべて見る
+          </Link>
+        </div>
+
+        {properties.length === 0 ? (
+          <EmptyState>
+            まだ物件が登録されていません。物件を追加すると、ここに一覧が表示されます。
+          </EmptyState>
+        ) : (
+          <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            {properties.map((property) => {
+              const propertyItems = items.filter(
+                (item) => item.property_id === property.id,
+              )
+              const lowCount = propertyItems.filter(
+                (item) => item.quantity < item.threshold,
+              ).length
+
+              return (
+                <li
+                  key={property.id}
+                  className="flex items-center justify-between gap-4 px-5 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-slate-900">
+                      {property.name}
+                    </p>
+                    <p className="truncate text-xs text-slate-500">
+                      {property.address ?? '住所未設定'}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3 text-sm">
+                    <span className="text-slate-500">
+                      備品 {propertyItems.length}
+                    </span>
+                    {lowCount > 0 && (
+                      <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                        要補充 {lowCount}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-900">
+          補充が必要な備品
+        </h2>
         {lowStockItems.length === 0 ? (
           <EmptyState>
             {items.length === 0
-              ? '集計は Supabase のテーブル作成後に実装します。'
+              ? '備品を登録すると、在庫が閾値を下回ったものがここに出ます。'
               : '補充が必要な備品はありません。'}
           </EmptyState>
         ) : (
@@ -71,7 +131,7 @@ export function DashboardPage() {
                     <span className="font-bold text-red-600">
                       {item.quantity}
                     </span>{' '}
-                    / 閾値 {item.threshold} {item.unit}
+                    / 閾値 {item.threshold}
                   </p>
                 </li>
               )

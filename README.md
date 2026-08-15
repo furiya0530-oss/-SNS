@@ -75,6 +75,23 @@ profiles ── properties ─┬─ items
                         └─ checklist_records ── checklist_record_details
 ```
 
+### 認証
+
+メールアドレス + パスワードで登録・ログインします (`/login` のタブで切り替え)。
+新規登録時は DB の `on_auth_user_created` トリガーが `profiles` の行を
+`plan = 'free'` で自動作成します。
+
+Supabase ダッシュボードの **Authentication > Providers > Email** で
+「Confirm email」を有効にしている場合は、確認メールのリンクを開くまで
+ログインが完了しません。ローカルで手早く試したい場合はこの設定を切ってください。
+
+型定義 (`src/types/database.ts`) はスキーマと同じ形で手書きしています。
+CLI が使えるようになったら次のコマンドで置き換えられます。
+
+```bash
+supabase gen types typescript --linked > src/types/database.ts
+```
+
 ## npm スクリプト
 
 | コマンド | 内容 |
@@ -125,7 +142,7 @@ src/
 - [x] Vite + React + TypeScript のプロジェクト初期化
 - [x] Tailwind CSS のセットアップ
 - [x] Supabase クライアントのセットアップ
-- [x] 認証 (マジックリンク) と保護ルート
+- [x] 認証 (メール / パスワード) と保護ルート
 - [x] 画面の雛形 (ダッシュボード / 物件 / 備品)
 - [x] デモモード (Supabase なしで画面を確認できる)
 - [x] Supabase のテーブル設計と RLS ポリシー

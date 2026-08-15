@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { isDemoMode } from '@/lib/demo'
+import type { Database } from '@/types/database'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -14,7 +15,7 @@ if (!isDemoMode && (!supabaseUrl || !supabaseAnonKey)) {
 }
 
 // デモモードではダミー値でクライアントを作るだけで、実際の通信は行わない。
-export const supabase = createClient(
+export const supabase = createClient<Database>(
   supabaseUrl || 'https://demo.example.supabase.co',
   supabaseAnonKey || 'demo-anon-key',
   {

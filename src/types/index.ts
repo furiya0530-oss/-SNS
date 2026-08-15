@@ -1,86 +1,56 @@
+import type { Database } from './database'
+
+export type { Database, Json } from './database'
+
+/** テーブルの行の型を取り出すユーティリティ (例: Tables<'items'>) */
+export type Tables<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Row']
+
+export type TablesInsert<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Insert']
+
+export type TablesUpdate<T extends keyof Database['public']['Tables']> =
+  Database['public']['Tables'][T]['Update']
+
+// ---- 各テーブルの行 ----
+export type Profile = Tables<'profiles'>
+export type Property = Tables<'properties'>
+export type Item = Tables<'items'>
+export type Checklist = Tables<'checklists'>
+export type ChecklistItem = Tables<'checklist_items'>
+export type ChecklistRecord = Tables<'checklist_records'>
+export type ChecklistRecordDetail = Tables<'checklist_record_details'>
+
+// ---- ENUM ----
+export type PlanType = Database['public']['Enums']['plan_type']
+export type ChecklistStatus = Database['public']['Enums']['checklist_status']
+
 /**
- * アプリ全体で使うドメイン型。
- * Supabase のテーブル設計が固まったら
- * `supabase gen types typescript` で生成した型に置き換える想定。
+ * 備品カテゴリ。
+ * DB 側は自由入力の text なので、ここでの一覧は UI の選択肢という位置づけ。
  */
+export const ITEM_CATEGORIES = [
+  { value: 'amenity', label: 'アメニティ' },
+  { value: 'linen', label: 'リネン' },
+  { value: 'cleaning', label: '清掃用品' },
+  { value: 'kitchen', label: 'キッチン' },
+  { value: 'equipment', label: '設備・家電' },
+  { value: 'other', label: 'その他' },
+] as const
 
-/** 民泊物件 */
-export interface Property {
-  id: string
-  /** 所有ユーザー (auth.users.id) */
-  owner_id: string
-  name: string
-  address: string | null
-  /** 部屋数や定員などのメモ */
-  note: string | null
-  created_at: string
-  updated_at: string
+export type ItemCategory = (typeof ITEM_CATEGORIES)[number]['value']
+
+/** カテゴリ値を日本語ラベルにする。未知の値はそのまま返す。 */
+export function itemCategoryLabel(category: string | null): string {
+  if (!category) return '未分類'
+  return (
+    ITEM_CATEGORIES.find((c) => c.value === category)?.label ?? category
+  )
 }
 
-/** 備品のカテゴリ */
-export type ItemCategory =
-  | 'amenity' // アメニティ (歯ブラシ、シャンプーなど)
-  | 'linen' // リネン (シーツ、タオルなど)
-  | 'cleaning' // 清掃用品
-  | 'kitchen' // キッチン用品
-  | 'equipment' // 設備・家電
-  | 'other'
-
-/** 備品マスタ */
-export interface Item {
-  id: string
-  property_id: string
-  name: string
-  category: ItemCategory
-  /** 単位 (個、セット、本など) */
-  unit: string
-  /** 現在の在庫数 */
-  quantity: number
-  /** この数量を下回ったら補充アラートを出す閾値 */
-  threshold: number
-  created_at: string
-  updated_at: string
-}
-
-/** 在庫の増減種別 */
-export type StockMovementType =
-  | 'restock' // 補充
-  | 'consume' // 消費
-  | 'adjust' // 棚卸しによる調整
-  | 'discard' // 廃棄
-
-/** 在庫の増減履歴 */
-export interface StockMovement {
-  id: string
-  item_id: string
-  type: StockMovementType
-  /** 増減量 (消費・廃棄はマイナス) */
-  delta: number
-  note: string | null
-  /** 操作したユーザー (auth.users.id) */
-  created_by: string
-  created_at: string
-}
-
-/** サブスクリプションのプラン (フェーズ2の Stripe 連携で使用) */
-export type SubscriptionPlan = 'free' | 'standard' | 'pro'
-
-/** サブスクリプションの状態 (Stripe の status に対応) */
-export type SubscriptionStatus =
-  | 'active'
-  | 'trialing'
-  | 'past_due'
-  | 'canceled'
-  | 'incomplete'
-
-/** ユーザープロフィール */
-export interface Profile {
-  /** auth.users.id と同一 */
-  id: string
-  display_name: string | null
-  plan: SubscriptionPlan
-  subscription_status: SubscriptionStatus | null
-  stripe_customer_id: string | null
-  created_at: string
-  updated_at: string
+/** チェック結果のラベル */
+export const CHECKLIST_STATUS_LABELS: Record<ChecklistStatus, string> = {
+  ok: '問題なし',
+  short: '不足',
+  broken: '破損',
 }

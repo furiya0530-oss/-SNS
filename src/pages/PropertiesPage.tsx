@@ -2,7 +2,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { demoItems, demoProperties, isDemoMode } from '@/lib/demo'
 
 export function PropertiesPage() {
-  // TODO: Supabase のテーブル作成後に実データへ差し替える
+  // TODO: Supabase から実データを取得する処理に差し替える
   const properties = isDemoMode ? demoProperties : []
   const items = isDemoMode ? demoItems : []
 
@@ -16,13 +16,19 @@ export function PropertiesPage() {
       </div>
 
       {properties.length === 0 ? (
-        <EmptyState>物件の一覧・登録は次のフェーズで実装します。</EmptyState>
+        <EmptyState>
+          まだ物件が登録されていません。物件の登録機能は次のフェーズで実装します。
+        </EmptyState>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2">
           {properties.map((property) => {
-            const itemCount = items.filter(
+            const propertyItems = items.filter(
               (item) => item.property_id === property.id,
+            )
+            const lowCount = propertyItems.filter(
+              (item) => item.quantity < item.threshold,
             ).length
+
             return (
               <li
                 key={property.id}
@@ -32,11 +38,18 @@ export function PropertiesPage() {
                   {property.name}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {property.address}
+                  {property.address ?? '住所未設定'}
                 </p>
-                <p className="mt-3 text-xs text-slate-500">
-                  {property.note} ・ 備品 {itemCount} 件
-                </p>
+                <div className="mt-3 flex items-center gap-3 text-xs">
+                  <span className="text-slate-500">
+                    備品 {propertyItems.length} 件
+                  </span>
+                  {lowCount > 0 && (
+                    <span className="rounded-full bg-red-50 px-2 py-0.5 font-medium text-red-700">
+                      要補充 {lowCount} 件
+                    </span>
+                  )}
+                </div>
               </li>
             )
           })}

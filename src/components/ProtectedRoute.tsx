@@ -1,10 +1,15 @@
 import type { ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useSession } from '@/hooks/useSession'
 
-/** ログイン済みのときだけ children を表示し、未ログインなら /login へ飛ばす。 */
+/**
+ * ログイン済みのときだけ children を表示し、
+ * 未ログインなら /login へ飛ばす。
+ * 元のパスを state で渡し、ログイン後にそこへ戻れるようにする。
+ */
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { session, loading } = useSession()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -15,7 +20,13 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!session) {
-    return <Navigate to="/login" replace />
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname + location.search }}
+      />
+    )
   }
 
   return <>{children}</>

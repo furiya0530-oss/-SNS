@@ -1,18 +1,9 @@
 import { EmptyState } from '@/components/EmptyState'
 import { demoItems, demoProperties, isDemoMode } from '@/lib/demo'
-import type { ItemCategory } from '@/types'
-
-const categoryLabels: Record<ItemCategory, string> = {
-  amenity: 'アメニティ',
-  linen: 'リネン',
-  cleaning: '清掃用品',
-  kitchen: 'キッチン',
-  equipment: '設備・家電',
-  other: 'その他',
-}
+import { itemCategoryLabel } from '@/types'
 
 export function ItemsPage() {
-  // TODO: Supabase のテーブル作成後に実データへ差し替える
+  // TODO: Supabase から実データを取得する処理に差し替える
   const items = isDemoMode ? demoItems : []
   const properties = isDemoMode ? demoProperties : []
 
@@ -27,7 +18,7 @@ export function ItemsPage() {
 
       {items.length === 0 ? (
         <EmptyState>
-          備品の一覧・在庫の増減は次のフェーズで実装します。
+          まだ備品が登録されていません。備品の登録・在庫の増減は次のフェーズで実装します。
         </EmptyState>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
@@ -57,10 +48,10 @@ export function ItemsPage() {
                       {property?.name ?? '-'}
                     </td>
                     <td className="px-4 py-3 text-slate-600">
-                      {categoryLabels[item.category]}
+                      {itemCategoryLabel(item.category)}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-slate-900">
-                      {item.quantity} {item.unit}
+                      {item.quantity}
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums text-slate-500">
                       {item.threshold}

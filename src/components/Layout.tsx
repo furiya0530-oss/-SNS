@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { isDemoMode } from '@/lib/demo'
+import { useProfile } from '@/hooks/useProfile'
 import { useSession } from '@/hooks/useSession'
 
 const navItems = [
@@ -11,6 +12,7 @@ const navItems = [
 
 export function Layout() {
   const { user } = useSession()
+  const { profile } = useProfile()
 
   return (
     <div className="flex min-h-full flex-col">
@@ -46,7 +48,7 @@ export function Layout() {
             {user && (
               <>
                 <span className="hidden text-slate-500 sm:inline">
-                  {user.email}
+                  {profile?.name ?? user.email}
                 </span>
                 {!isDemoMode && (
                   <button

@@ -8,6 +8,7 @@ const navItems = [
   { to: '/', label: 'ダッシュボード' },
   { to: '/properties', label: '物件' },
   { to: '/items', label: '備品' },
+  { to: '/csv', label: 'CSV' },
 ]
 
 export function Layout() {

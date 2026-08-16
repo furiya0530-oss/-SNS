@@ -189,6 +189,10 @@ export interface Database {
         Args: { p_checklist_record_id: string }
         Returns: boolean
       }
+      import_items: {
+        Args: { p_rows: Json }
+        Returns: Json
+      }
       submit_checklist_record: {
         Args: {
           p_checklist_id: string

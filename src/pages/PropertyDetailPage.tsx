@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { EmptyState } from '@/components/EmptyState'
+import { ExportItemsButton } from '@/components/ExportItemsButton'
 import { ItemFormDialog } from '@/components/ItemFormDialog'
 import { ItemList } from '@/components/ItemList'
 import { CreateChecklistDialog } from '@/components/CreateChecklistDialog'
@@ -117,7 +118,14 @@ export function PropertyDetailPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-slate-900">備品台帳</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-slate-900">備品台帳</h2>
+          <ExportItemsButton
+            items={items}
+            properties={[property]}
+            label={property.name}
+          />
+        </div>
 
         {itemsLoading ? (
           <p className="text-sm text-slate-500">読み込み中...</p>

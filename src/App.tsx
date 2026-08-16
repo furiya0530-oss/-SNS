@@ -4,6 +4,7 @@ import { isDemoMode } from '@/lib/demo'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ItemsPage } from '@/pages/ItemsPage'
+import { CsvPage } from '@/pages/CsvPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { PropertiesPage } from '@/pages/PropertiesPage'
@@ -52,6 +53,7 @@ function App() {
             element={<ChecklistRecordDetailPage />}
           />
           <Route path="/items" element={<ItemsPage />} />
+          <Route path="/csv" element={<CsvPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

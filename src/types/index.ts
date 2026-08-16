@@ -23,7 +23,14 @@ export type ChecklistRecordDetail = Tables<'checklist_record_details'>
 
 // ---- ENUM ----
 export type PlanType = Database['public']['Enums']['plan_type']
+export type UserRole = Database['public']['Enums']['user_role']
 export type ChecklistStatus = Database['public']['Enums']['checklist_status']
+
+/** 役割のラベル (MVP では権限に影響しない区分) */
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  owner: 'オーナー',
+  staff: '清掃スタッフ',
+}
 
 /**
  * 備品カテゴリ (要件定義書 6.1 の「アメニティ/消耗品/家電/寝具など」に対応)。
@@ -64,7 +71,14 @@ export function itemCategoryLabel(category: string | null): string {
 
 /** チェック結果のラベル */
 export const CHECKLIST_STATUS_LABELS: Record<ChecklistStatus, string> = {
-  ok: '問題なし',
+  ok: 'OK',
   short: '不足',
   broken: '破損',
+}
+
+/** チェック結果の表示色 (バッジ用) */
+export const CHECKLIST_STATUS_CLASSES: Record<ChecklistStatus, string> = {
+  ok: 'bg-green-50 text-green-700',
+  short: 'bg-amber-50 text-amber-800',
+  broken: 'bg-red-50 text-red-700',
 }

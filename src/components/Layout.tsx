@@ -22,18 +22,22 @@ export function Layout() {
         </p>
       )}
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center gap-6 px-4 py-3">
-          <Link to="/" className="text-lg font-bold text-slate-900">
+        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:gap-6">
+          <Link
+            to="/"
+            className="shrink-0 whitespace-nowrap text-base font-bold text-slate-900 sm:text-lg"
+          >
             民泊備品管理
           </Link>
-          <nav className="flex gap-1">
+          {/* 画面が狭いときは横スクロールさせ、折り返して崩れないようにする */}
+          <nav className="flex min-w-0 gap-1 overflow-x-auto">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  `whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     isActive
                       ? 'bg-slate-900 text-white'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -44,7 +48,7 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-3 text-sm">
+          <div className="ml-auto flex shrink-0 items-center gap-3 text-sm">
             {user && (
               <>
                 <span className="hidden text-slate-500 sm:inline">
@@ -54,7 +58,7 @@ export function Layout() {
                   <button
                     type="button"
                     onClick={() => void supabase.auth.signOut()}
-                    className="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+                    className="whitespace-nowrap rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
                   >
                     ログアウト
                   </button>

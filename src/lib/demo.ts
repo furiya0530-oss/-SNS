@@ -1,5 +1,13 @@
 import type { User } from '@supabase/supabase-js'
-import type { Item, Profile, Property } from '@/types'
+import type {
+  Checklist,
+  ChecklistItem,
+  ChecklistRecord,
+  ChecklistRecordDetail,
+  Item,
+  Profile,
+  Property,
+} from '@/types'
 
 /**
  * デモモード。
@@ -23,6 +31,7 @@ export const demoUser = {
 export const demoProfile: Profile = {
   id: demoUser.id,
   name: 'デモオーナー',
+  role: 'owner',
   plan: 'free',
   plan_expires_at: null,
   created_at: '2026-01-15T09:00:00Z',
@@ -132,5 +141,97 @@ export const demoItems: Item[] = [
     threshold: 3,
     photo_url: null,
     updated_at: '2026-08-14T09:00:00Z',
+  },
+]
+
+// ---- チェックリスト ----
+
+export const demoChecklists: Checklist[] = [
+  {
+    id: 'c0000000-0000-0000-0000-000000000001',
+    property_id: demoProperties[0].id,
+    title: 'チェックアウト後の清掃',
+    created_at: '2026-03-01T09:00:00Z',
+  },
+  {
+    id: 'c0000000-0000-0000-0000-000000000002',
+    property_id: demoProperties[1].id,
+    title: 'チェックイン前の最終確認',
+    created_at: '2026-03-05T09:00:00Z',
+  },
+]
+
+export const demoChecklistItems: ChecklistItem[] = [
+  {
+    id: 'd0000000-0000-0000-0000-000000000001',
+    checklist_id: demoChecklists[0].id,
+    item_id: demoItems[1].id, // バスタオル
+    label: 'バスタオルが4枚あるか',
+  },
+  {
+    id: 'd0000000-0000-0000-0000-000000000002',
+    checklist_id: demoChecklists[0].id,
+    item_id: demoItems[0].id, // 歯ブラシセット
+    label: '歯ブラシセットの補充',
+  },
+  {
+    id: 'd0000000-0000-0000-0000-000000000003',
+    checklist_id: demoChecklists[0].id,
+    item_id: null,
+    label: '鍵の返却を確認',
+  },
+  {
+    id: 'd0000000-0000-0000-0000-000000000004',
+    checklist_id: demoChecklists[1].id,
+    item_id: demoItems[4].id, // シーツ
+    label: 'シーツが交換されているか',
+  },
+]
+
+export const demoChecklistRecords: ChecklistRecord[] = [
+  {
+    id: 'e0000000-0000-0000-0000-000000000001',
+    checklist_id: demoChecklists[0].id,
+    property_id: demoProperties[0].id,
+    performed_by: demoUser.id,
+    performed_at: '2026-08-14T04:30:00Z',
+  },
+  {
+    id: 'e0000000-0000-0000-0000-000000000002',
+    checklist_id: demoChecklists[0].id,
+    property_id: demoProperties[0].id,
+    performed_by: demoUser.id,
+    performed_at: '2026-08-09T05:10:00Z',
+  },
+]
+
+export const demoChecklistRecordDetails: ChecklistRecordDetail[] = [
+  {
+    id: 'f0000000-0000-0000-0000-000000000001',
+    checklist_record_id: demoChecklistRecords[0].id,
+    checklist_item_id: demoChecklistItems[0].id,
+    status: 'ok',
+    comment: null,
+  },
+  {
+    id: 'f0000000-0000-0000-0000-000000000002',
+    checklist_record_id: demoChecklistRecords[0].id,
+    checklist_item_id: demoChecklistItems[1].id,
+    status: 'short',
+    comment: '残り8セット。次回までに補充が必要',
+  },
+  {
+    id: 'f0000000-0000-0000-0000-000000000003',
+    checklist_record_id: demoChecklistRecords[0].id,
+    checklist_item_id: demoChecklistItems[2].id,
+    status: 'ok',
+    comment: null,
+  },
+  {
+    id: 'f0000000-0000-0000-0000-000000000004',
+    checklist_record_id: demoChecklistRecords[1].id,
+    checklist_item_id: demoChecklistItems[0].id,
+    status: 'broken',
+    comment: 'タオル1枚にシミ。処分しました',
   },
 ]

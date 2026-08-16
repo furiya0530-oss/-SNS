@@ -1,22 +1,34 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { EmptyState } from '@/components/EmptyState'
 import { ItemFormDialog } from '@/components/ItemFormDialog'
 import { ItemList } from '@/components/ItemList'
+import { CreateChecklistDialog } from '@/components/CreateChecklistDialog'
+import { useChecklists } from '@/hooks/useChecklists'
 import { useItems, type ItemInput } from '@/hooks/useItems'
 import { useProperty } from '@/hooks/useProperty'
 import { countLowStock } from '@/lib/stock'
-import type { Item } from '@/types'
+import type { Checklist, Item } from '@/types'
 
 type Dialog =
   | { type: 'create' }
   | { type: 'edit'; item: Item }
   | { type: 'delete'; item: Item }
+  | { type: 'createChecklist' }
+  | { type: 'deleteChecklist'; checklist: Checklist }
   | null
 
 export function PropertyDetailPage() {
   const { propertyId } = useParams<{ propertyId: string }>()
+  const navigate = useNavigate()
   const { property, loading: propertyLoading } = useProperty(propertyId)
+  const {
+    checklists,
+    loading: checklistsLoading,
+    create: createChecklist,
+    remove: removeChecklist,
+  } = useChecklists(propertyId)
   const {
     items,
     loading: itemsLoading,
@@ -118,6 +130,93 @@ export function PropertyDetailPage() {
           />
         )}
       </section>
+
+      {/* 清掃チェックリスト */}
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-slate-900">
+            清掃チェックリスト
+          </h2>
+          <div className="flex gap-2">
+            <Link
+              to={`/properties/${propertyId}/records`}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              チェック履歴
+            </Link>
+            <button
+              type="button"
+              onClick={() => setDialog({ type: 'createChecklist' })}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              チェックリストを作成
+            </button>
+          </div>
+        </div>
+
+        {checklistsLoading ? (
+          <p className="text-sm text-slate-500">読み込み中...</p>
+        ) : checklists.length === 0 ? (
+          <EmptyState>
+            まだチェックリストがありません。「チェックリストを作成」から追加してください。
+          </EmptyState>
+        ) : (
+          <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            {checklists.map((checklist) => (
+              <li
+                key={checklist.id}
+                className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
+              >
+                <p className="min-w-0 truncate font-medium text-slate-900">
+                  {checklist.title}
+                </p>
+                <div className="flex shrink-0 gap-1">
+                  <Link
+                    to={`/properties/${propertyId}/checklists/${checklist.id}/run`}
+                    className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
+                  >
+                    実施する
+                  </Link>
+                  <Link
+                    to={`/properties/${propertyId}/checklists/${checklist.id}`}
+                    className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                  >
+                    編集
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setDialog({ type: 'deleteChecklist', checklist })
+                    }
+                    className="rounded-md px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    削除
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {dialog?.type === 'createChecklist' && (
+        <CreateChecklistDialog
+          onSubmit={async (title) => {
+            const created = await createChecklist(title)
+            navigate(`/properties/${propertyId}/checklists/${created.id}`)
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+
+      {dialog?.type === 'deleteChecklist' && (
+        <ConfirmDialog
+          title="チェックリストを削除"
+          message={`「${dialog.checklist.title}」を削除します。項目と過去の実施記録もすべて削除され、元に戻せません。`}
+          onConfirm={() => removeChecklist(dialog.checklist.id)}
+          onClose={() => setDialog(null)}
+        />
+      )}
 
       {dialog?.type === 'create' && propertyId && (
         <ItemFormDialog

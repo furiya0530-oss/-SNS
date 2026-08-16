@@ -25,6 +25,7 @@ export interface Database {
         Row: {
           id: string
           name: string | null
+          role: Database['public']['Enums']['user_role']
           plan: Database['public']['Enums']['plan_type']
           plan_expires_at: string | null
           created_at: string
@@ -34,7 +35,7 @@ export interface Database {
           id: string
           name?: string | null
         }
-        // grant update (name) — plan / plan_expires_at は service_role のみ
+        // grant update (name) — role / plan / plan_expires_at は service_role のみ
         Update: {
           name?: string | null
         }
@@ -188,9 +189,18 @@ export interface Database {
         Args: { p_checklist_record_id: string }
         Returns: boolean
       }
+      submit_checklist_record: {
+        Args: {
+          p_checklist_id: string
+          p_property_id: string
+          p_details: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
       plan_type: 'free' | 'pro'
+      user_role: 'owner' | 'staff'
       checklist_status: 'ok' | 'short' | 'broken'
     }
     CompositeTypes: Record<never, never>

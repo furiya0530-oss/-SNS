@@ -28,6 +28,8 @@ export interface Database {
           role: Database['public']['Enums']['user_role']
           plan: Database['public']['Enums']['plan_type']
           plan_expires_at: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           created_at: string
         }
         // grant insert (id, name) — plan は既定値の 'free' で作られる
@@ -35,7 +37,7 @@ export interface Database {
           id: string
           name?: string | null
         }
-        // grant update (name) — role / plan / plan_expires_at は service_role のみ
+        // grant update (name) — role / plan / Stripe 関連は service_role のみ
         Update: {
           name?: string | null
         }

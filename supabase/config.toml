@@ -1,0 +1,12 @@
+project_id = "minpaku-inventory"
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.create-portal-session]
+verify_jwt = true
+
+# Stripe から呼ばれるため JWT 認証は外す。
+# 代わりに署名 (STRIPE_WEBHOOK_SECRET) で正当性を検証している。
+[functions.stripe-webhook]
+verify_jwt = false

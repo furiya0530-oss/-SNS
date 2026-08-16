@@ -34,6 +34,8 @@ export const demoProfile: Profile = {
   role: 'owner',
   plan: 'free',
   plan_expires_at: null,
+  stripe_customer_id: null,
+  stripe_subscription_id: null,
   created_at: '2026-01-15T09:00:00Z',
 }
 

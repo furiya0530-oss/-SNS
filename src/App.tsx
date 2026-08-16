@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ItemsPage } from '@/pages/ItemsPage'
 import { CsvPage } from '@/pages/CsvPage'
+import { PlanPage } from '@/pages/PlanPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { PropertiesPage } from '@/pages/PropertiesPage'
@@ -54,6 +55,7 @@ function App() {
           />
           <Route path="/items" element={<ItemsPage />} />
           <Route path="/csv" element={<CsvPage />} />
+          <Route path="/plan" element={<PlanPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

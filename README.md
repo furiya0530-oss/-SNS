@@ -10,7 +10,7 @@
 | スタイリング | Tailwind CSS v4 (`@tailwindcss/vite`) |
 | ルーティング | React Router |
 | バックエンド / DB / 認証 | Supabase (`@supabase/supabase-js`) |
-| 決済 | Stripe (サブスクリプション、フェーズ2で実装) |
+| 決済 | Stripe (サブスクリプション + Supabase Edge Functions) |
 | ホスティング | Vercel (想定) |
 
 ## セットアップ
@@ -126,6 +126,54 @@ Supabase ダッシュボードの **Authentication > Providers > Email** で
 - 取り込みは DB 関数 `import_items` で 1 トランザクションにまとめており、
   途中で失敗した場合は 1 行も反映されません
 
+### 課金 (Stripe)
+
+`/plan` でプランの比較と契約状況を表示し、Stripe Checkout へ遷移します。
+解約や支払い方法の変更は Stripe カスタマーポータルで行います。
+
+Stripe のシークレットキーはブラウザに置けないため、セッション作成と
+Webhook の受け口は Supabase Edge Functions に置いています。
+
+| 関数 | 役割 |
+| --- | --- |
+| `create-checkout-session` | Checkout セッションを作る (要ログイン) |
+| `create-portal-session` | カスタマーポータルのセッションを作る (要ログイン) |
+| `stripe-webhook` | 契約状況を `profiles.plan` へ同期する |
+
+#### セットアップ手順
+
+1. Stripe で Pro プランの商品と月額 Price を作る
+2. シークレットを登録する
+
+```bash
+supabase secrets set STRIPE_SECRET_KEY=sk_...
+supabase secrets set STRIPE_PRICE_ID=price_...
+supabase secrets set APP_URL=https://<本番URL>
+```
+
+3. 関数をデプロイする (Webhook は Stripe から呼ばれるので JWT 検証を外す)
+
+```bash
+supabase functions deploy create-checkout-session
+supabase functions deploy create-portal-session
+supabase functions deploy stripe-webhook --no-verify-jwt
+```
+
+4. Stripe ダッシュボードで Webhook エンドポイントを登録する
+   URL: `https://<project-ref>.supabase.co/functions/v1/stripe-webhook`
+   イベント: `checkout.session.completed`,
+   `customer.subscription.created/updated/deleted`
+5. 発行された署名シークレットを登録する
+
+```bash
+supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+`plan` は本人が更新できない列にしてあるため、課金状態を書き換えるのは
+Webhook (service_role) だけです。Checkout から戻った直後は Webhook の処理が
+まだ終わっていないことがあるので、画面側でプランが切り替わるまで数回
+読み直します。
+
 ### プランによる制限
 
 無料プラン (`plan = 'free'`) のユーザーが登録できる物件は 1 件までです。
@@ -178,7 +226,7 @@ src/
 | --- | --- |
 | `VITE_SUPABASE_URL` | Supabase プロジェクトの URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase の anon (public) キー |
-| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe の公開可能キー (フェーズ2) |
+| `VITE_STRIPE_PUBLISHABLE_KEY` | Stripe の公開可能キー (現在は未使用) |
 | `VITE_DEMO_MODE` | `true` でデモモード (`.env.demo` で設定済み) |
 
 > `VITE_` プレフィックスの変数はビルド結果に埋め込まれ、ブラウザから参照できます。
@@ -202,4 +250,5 @@ src/
 - [x] 備品台帳 (CRUD・数量の増減・カテゴリ絞り込み・在庫アラート・写真)
 - [x] 清掃チェックリスト (テンプレート・実施・履歴)
 - [x] CSV 入出力 (備品台帳の書き出し/取り込み・チェック履歴の書き出し)
-- [ ] Stripe サブスクリプション連携
+- [x] Stripe サブスクリプション連携 (プラン画面・Checkout・Webhook・解約)
+- [ ] 仕上げ (レスポンシブ・ローディング/エラー表示の統一)

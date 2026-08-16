@@ -9,6 +9,7 @@ const navItems = [
   { to: '/properties', label: '物件' },
   { to: '/items', label: '備品' },
   { to: '/csv', label: 'CSV' },
+  { to: '/plan', label: 'プラン' },
 ]
 
 export function Layout() {

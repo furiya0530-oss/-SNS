@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { EmptyState } from '@/components/EmptyState'
 import { PropertyFormDialog } from '@/components/PropertyFormDialog'
+import { useItems } from '@/hooks/useItems'
 import { useProfile } from '@/hooks/useProfile'
 import { useProperties, type PropertyInput } from '@/hooks/useProperties'
-import { demoItems, isDemoMode } from '@/lib/demo'
+import { isLowStock } from '@/lib/stock'
 import {
   FREE_PLAN_PROPERTY_LIMIT,
   UPGRADE_REQUIRED_MESSAGE,
@@ -22,11 +24,9 @@ type Dialog =
 export function PropertiesPage() {
   const { profile } = useProfile()
   const { properties, loading, error, create, update, remove } = useProperties()
+  const { items } = useItems()
   const [dialog, setDialog] = useState<Dialog>(null)
   const [showUpgrade, setShowUpgrade] = useState(false)
-
-  // TODO: 備品も Supabase から取得する (次フェーズ)
-  const items = isDemoMode ? demoItems : []
 
   const plan = profile?.plan
   const canAdd = canAddProperty(plan, properties.length)
@@ -125,9 +125,7 @@ export function PropertiesPage() {
             const propertyItems = items.filter(
               (item) => item.property_id === property.id,
             )
-            const lowCount = propertyItems.filter(
-              (item) => item.quantity < item.threshold,
-            ).length
+            const lowCount = propertyItems.filter(isLowStock).length
 
             return (
               <li
@@ -135,7 +133,12 @@ export function PropertiesPage() {
                 className="flex flex-col rounded-xl border border-slate-200 bg-white p-5"
               >
                 <h2 className="font-semibold text-slate-900">
-                  {property.name}
+                  <Link
+                    to={`/properties/${property.id}`}
+                    className="hover:underline"
+                  >
+                    {property.name}
+                  </Link>
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
                   {property.address ?? '住所未設定'}
@@ -153,6 +156,12 @@ export function PropertiesPage() {
                 </div>
 
                 <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
+                  <Link
+                    to={`/properties/${property.id}`}
+                    className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
+                  >
+                    備品を見る
+                  </Link>
                   <button
                     type="button"
                     onClick={() => setDialog({ type: 'edit', property })}

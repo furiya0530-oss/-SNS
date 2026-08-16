@@ -1,16 +1,15 @@
 import { Link } from 'react-router-dom'
 import { EmptyState } from '@/components/EmptyState'
-import { demoItems, isDemoMode } from '@/lib/demo'
+import { useItems } from '@/hooks/useItems'
+import { isLowStock } from '@/lib/stock'
 import { useProfile } from '@/hooks/useProfile'
 import { useProperties } from '@/hooks/useProperties'
 
 export function DashboardPage() {
   const { profile } = useProfile()
   const { properties } = useProperties()
-
-  // TODO: 備品も Supabase から取得する (次フェーズ)
-  const items = isDemoMode ? demoItems : []
-  const lowStockItems = items.filter((item) => item.quantity < item.threshold)
+  const { items } = useItems()
+  const lowStockItems = items.filter(isLowStock)
 
   const stats = [
     { label: '登録物件数', value: properties.length, tone: 'text-slate-900' },
@@ -73,9 +72,7 @@ export function DashboardPage() {
               const propertyItems = items.filter(
                 (item) => item.property_id === property.id,
               )
-              const lowCount = propertyItems.filter(
-                (item) => item.quantity < item.threshold,
-              ).length
+              const lowCount = propertyItems.filter(isLowStock).length
 
               return (
                 <li

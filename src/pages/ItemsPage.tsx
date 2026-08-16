@@ -1,78 +1,72 @@
+import { useState } from 'react'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { ItemFormDialog } from '@/components/ItemFormDialog'
+import { ItemList } from '@/components/ItemList'
 import { EmptyState } from '@/components/EmptyState'
-import { demoItems, demoProperties, isDemoMode } from '@/lib/demo'
-import { itemCategoryLabel } from '@/types'
+import { useItems } from '@/hooks/useItems'
+import { useProperties } from '@/hooks/useProperties'
+import type { Item } from '@/types'
 
+type Dialog = { type: 'edit'; item: Item } | { type: 'delete'; item: Item } | null
+
+/** 全物件の備品を横断して見るページ。登録は物件詳細から行う。 */
 export function ItemsPage() {
-  // TODO: Supabase から実データを取得する処理に差し替える
-  const items = isDemoMode ? demoItems : []
-  const properties = isDemoMode ? demoProperties : []
+  const { properties } = useProperties()
+  const { items, loading, error, update, remove, adjustQuantity } = useItems()
+  const [dialog, setDialog] = useState<Dialog>(null)
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">備品</h1>
         <p className="mt-1 text-sm text-slate-500">
-          物件ごとの備品と在庫数を管理します。
+          すべての物件の備品をまとめて表示します。追加は物件ごとの画面から行います。
         </p>
       </div>
 
-      {items.length === 0 ? (
+      {error && (
+        <p
+          role="alert"
+          className="rounded-md bg-red-50 p-3 text-sm text-red-700"
+        >
+          {error}
+        </p>
+      )}
+
+      {loading ? (
+        <p className="text-sm text-slate-500">読み込み中...</p>
+      ) : properties.length === 0 ? (
         <EmptyState>
-          まだ備品が登録されていません。備品の登録・在庫の増減は次のフェーズで実装します。
+          先に物件を登録してください。備品は物件ごとに管理します。
         </EmptyState>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-          <table className="w-full min-w-[38rem] text-left text-sm">
-            <thead className="border-b border-slate-200 text-xs text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">備品名</th>
-                <th className="px-4 py-3 font-medium">物件</th>
-                <th className="px-4 py-3 font-medium">カテゴリ</th>
-                <th className="px-4 py-3 text-right font-medium">在庫</th>
-                <th className="px-4 py-3 text-right font-medium">閾値</th>
-                <th className="px-4 py-3 font-medium">状態</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {items.map((item) => {
-                const isLow = item.quantity < item.threshold
-                const property = properties.find(
-                  (p) => p.id === item.property_id,
-                )
-                return (
-                  <tr key={item.id}>
-                    <td className="px-4 py-3 font-medium text-slate-900">
-                      {item.name}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {property?.name ?? '-'}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {itemCategoryLabel(item.category)}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-900">
-                      {item.quantity}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-slate-500">
-                      {item.threshold}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                          isLow
-                            ? 'bg-red-50 text-red-700'
-                            : 'bg-green-50 text-green-700'
-                        }`}
-                      >
-                        {isLow ? '要補充' : '十分'}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        <ItemList
+          items={items}
+          properties={properties}
+          onAdjust={(item, delta) => void adjustQuantity(item, delta)}
+          onEdit={(item) => setDialog({ type: 'edit', item })}
+          onDelete={(item) => setDialog({ type: 'delete', item })}
+        />
+      )}
+
+      {dialog?.type === 'edit' && (
+        <ItemFormDialog
+          propertyId={dialog.item.property_id}
+          item={dialog.item}
+          onSubmit={async (input) => {
+            await update(dialog.item.id, input)
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+
+      {dialog?.type === 'delete' && (
+        <ConfirmDialog
+          title="備品を削除"
+          message={`「${dialog.item.name}」を削除します。元に戻せません。`}
+          onConfirm={() => remove(dialog.item)}
+          onClose={() => setDialog(null)}
+        />
       )}
     </div>
   )

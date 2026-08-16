@@ -7,6 +7,7 @@ import { ItemsPage } from '@/pages/ItemsPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { PropertiesPage } from '@/pages/PropertiesPage'
+import { PropertyDetailPage } from '@/pages/PropertyDetailPage'
 
 // デモビルドは SPA フォールバックの無い静的ホストに置くため、
 // パスではなくハッシュでルーティングする。
@@ -26,6 +27,10 @@ function App() {
         >
           <Route path="/" element={<DashboardPage />} />
           <Route path="/properties" element={<PropertiesPage />} />
+          <Route
+            path="/properties/:propertyId"
+            element={<PropertyDetailPage />}
+          />
           <Route path="/items" element={<ItemsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

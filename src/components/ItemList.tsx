@@ -5,6 +5,7 @@ import { formatDate } from '@/lib/format'
 import { isLowStock } from '@/lib/stock'
 import { ITEM_CATEGORIES, itemCategoryLabel } from '@/types'
 import type { Item, Property } from '@/types'
+import { btnSmallGhost } from '@/lib/ui'
 
 interface ItemListProps {
   items: Item[]
@@ -105,7 +106,7 @@ export function ItemList({
             type="button"
             aria-pressed={category === filter.value}
             onClick={() => setCategory(filter.value)}
-            className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+            className={`inline-flex min-h-10 items-center rounded-full border px-3 py-1 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 sm:min-h-8 ${
               category === filter.value
                 ? 'border-slate-900 bg-slate-900 text-white'
                 : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-100'
@@ -120,7 +121,7 @@ export function ItemList({
             type="button"
             aria-pressed={lowStockOnly}
             onClick={() => setLowStockOnly((prev) => !prev)}
-            className={`ml-auto rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
+            className={`ml-auto inline-flex min-h-10 items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 sm:min-h-8 ${
               lowStockOnly
                 ? 'border-red-600 bg-red-600 text-white'
                 : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
@@ -147,7 +148,7 @@ export function ItemList({
             return (
               <li
                 key={item.id}
-                className={`flex gap-4 rounded-xl border p-4 ${
+                className={`flex min-w-0 gap-4 rounded-xl border p-4 ${
                   low
                     ? 'border-red-300 bg-red-50'
                     : 'border-slate-200 bg-white'
@@ -192,7 +193,7 @@ export function ItemList({
                         aria-label={`${item.name} を1減らす`}
                         disabled={item.quantity === 0}
                         onClick={() => onAdjust(item, -1)}
-                        className="h-8 w-8 rounded-md border border-slate-300 bg-white text-lg leading-none text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                        className="h-11 w-11 rounded-md border border-slate-300 bg-white text-xl leading-none text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 sm:h-9 sm:w-9 sm:text-lg"
                       >
                         −
                       </button>
@@ -207,7 +208,7 @@ export function ItemList({
                         type="button"
                         aria-label={`${item.name} を1増やす`}
                         onClick={() => onAdjust(item, 1)}
-                        className="h-8 w-8 rounded-md border border-slate-300 bg-white text-lg leading-none text-slate-700 hover:bg-slate-100"
+                        className="h-11 w-11 rounded-md border border-slate-300 bg-white text-xl leading-none text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 sm:h-9 sm:w-9 sm:text-lg"
                       >
                         ＋
                       </button>
@@ -223,7 +224,7 @@ export function ItemList({
                       <button
                         type="button"
                         onClick={() => onEdit(item)}
-                        className="rounded-md px-2 py-1 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                        className={btnSmallGhost}
                       >
                         編集
                       </button>

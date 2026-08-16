@@ -7,6 +7,7 @@ import { ExportItemsButton } from '@/components/ExportItemsButton'
 import { useItems } from '@/hooks/useItems'
 import { useProperties } from '@/hooks/useProperties'
 import type { Item } from '@/types'
+import { ErrorMessage, Loading } from '@/components/Feedback'
 
 type Dialog = { type: 'edit'; item: Item } | { type: 'delete'; item: Item } | null
 
@@ -29,16 +30,11 @@ export function ItemsPage() {
       </div>
 
       {error && (
-        <p
-          role="alert"
-          className="rounded-md bg-red-50 p-3 text-sm text-red-700"
-        >
-          {error}
-        </p>
+        <ErrorMessage>{error}</ErrorMessage>
       )}
 
       {loading ? (
-        <p className="text-sm text-slate-500">読み込み中...</p>
+        <Loading />
       ) : properties.length === 0 ? (
         <EmptyState>
           先に物件を登録してください。備品は物件ごとに管理します。

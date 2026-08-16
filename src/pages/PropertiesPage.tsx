@@ -14,6 +14,8 @@ import {
   isPropertyLimitError,
 } from '@/lib/planLimits'
 import type { Property } from '@/types'
+import { btnPrimary, btnSmallDanger, btnSmallPrimary, btnSmallSecondary } from '@/lib/ui'
+import { Loading } from '@/components/Feedback'
 
 type Dialog =
   | { type: 'create' }
@@ -66,7 +68,7 @@ export function PropertiesPage() {
         <button
           type="button"
           onClick={handleAddClick}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          className={btnPrimary}
         >
           物件を追加
         </button>
@@ -114,7 +116,7 @@ export function PropertiesPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-slate-500">読み込み中...</p>
+        <Loading />
       ) : properties.length === 0 ? (
         <EmptyState>
           まだ物件が登録されていません。「物件を追加」から登録してください。
@@ -130,7 +132,7 @@ export function PropertiesPage() {
             return (
               <li
                 key={property.id}
-                className="flex flex-col rounded-xl border border-slate-200 bg-white p-5"
+                className="flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white p-5"
               >
                 <h2 className="font-semibold text-slate-900">
                   <Link
@@ -155,24 +157,24 @@ export function PropertiesPage() {
                   )}
                 </div>
 
-                <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                   <Link
                     to={`/properties/${property.id}`}
-                    className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
+                    className={btnSmallPrimary}
                   >
                     備品を見る
                   </Link>
                   <button
                     type="button"
                     onClick={() => setDialog({ type: 'edit', property })}
-                    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                    className={btnSmallSecondary}
                   >
                     編集
                   </button>
                   <button
                     type="button"
                     onClick={() => setDialog({ type: 'delete', property })}
-                    className="rounded-md px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                    className={btnSmallDanger}
                   >
                     削除
                   </button>

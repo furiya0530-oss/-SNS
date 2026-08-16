@@ -9,6 +9,8 @@ import {
 } from '@/lib/billing'
 import { formatDate } from '@/lib/format'
 import { FREE_PLAN_PROPERTY_LIMIT } from '@/lib/planLimits'
+import { btnPrimary } from '@/lib/ui'
+import { ErrorMessage, Loading } from '@/components/Feedback'
 
 const PLAN_FEATURES = [
   { label: '登録できる物件数', free: `${FREE_PLAN_PROPERTY_LIMIT} 件まで`, pro: '無制限' },
@@ -77,7 +79,7 @@ export function PlanPage() {
   }
 
   if (loading) {
-    return <p className="text-sm text-slate-500">読み込み中...</p>
+    return <Loading />
   }
 
   return (
@@ -95,9 +97,7 @@ export function PlanPage() {
         </p>
       )}
       {error && (
-        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </p>
+        <ErrorMessage>{error}</ErrorMessage>
       )}
 
       {/* 現在の状態 */}
@@ -172,7 +172,7 @@ export function PlanPage() {
             type="button"
             onClick={() => void handle('checkout')}
             disabled={busy !== null}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            className={btnPrimary}
           >
             {busy === 'checkout' ? '準備中...' : 'Pro にアップグレード'}
           </button>

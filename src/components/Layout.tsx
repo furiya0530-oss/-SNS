@@ -24,22 +24,23 @@ export function Layout() {
         </p>
       )}
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:gap-6">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex-nowrap sm:gap-6">
           <Link
             to="/"
             className="shrink-0 whitespace-nowrap text-base font-bold text-slate-900 sm:text-lg"
           >
             民泊備品管理
           </Link>
-          {/* 画面が狭いときは横スクロールさせ、折り返して崩れないようにする */}
-          <nav className="flex min-w-0 gap-1 overflow-x-auto">
+          {/* 画面が狭いときはナビを次の行へ回し、現在地がログアウトの
+              裏に隠れないようにする。入りきらない場合は横スクロールする。 */}
+          <nav className="order-3 flex w-full min-w-0 gap-1 overflow-x-auto sm:order-2 sm:w-auto">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.to === '/'}
                 className={({ isActive }) =>
-                  `whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  `inline-flex min-h-10 items-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 sm:min-h-8 ${
                     isActive
                       ? 'bg-slate-900 text-white'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -50,7 +51,7 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto flex shrink-0 items-center gap-3 text-sm">
+          <div className="order-2 ml-auto flex shrink-0 items-center gap-3 text-sm sm:order-3">
             {user && (
               <>
                 <span className="hidden text-slate-500 sm:inline">
@@ -60,7 +61,7 @@ export function Layout() {
                   <button
                     type="button"
                     onClick={() => void supabase.auth.signOut()}
-                    className="whitespace-nowrap rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+                    className="inline-flex min-h-10 items-center whitespace-nowrap rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 sm:min-h-8"
                   >
                     ログアウト
                   </button>

@@ -7,6 +7,8 @@ import { useChecklistItems } from '@/hooks/useChecklistItems'
 import { useChecklists } from '@/hooks/useChecklists'
 import { useItems } from '@/hooks/useItems'
 import type { ChecklistItem } from '@/types'
+import { btnPrimary, btnSecondary, btnSmallDanger, btnSmallGhost } from '@/lib/ui'
+import { ErrorMessage, Loading } from '@/components/Feedback'
 
 /** チェックリスト(テンプレート)の編集画面 */
 export function ChecklistEditPage() {
@@ -157,15 +159,13 @@ export function ChecklistEditPage() {
         </div>
 
         {formError && (
-          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {formError}
-          </p>
+          <ErrorMessage>{formError}</ErrorMessage>
         )}
 
         <button
           type="submit"
           disabled={submitting}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          className={btnPrimary}
         >
           {submitting ? '追加中...' : '項目を追加'}
         </button>
@@ -178,13 +178,11 @@ export function ChecklistEditPage() {
         </h2>
 
         {error && (
-          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </p>
+          <ErrorMessage>{error}</ErrorMessage>
         )}
 
         {loading ? (
-          <p className="text-sm text-slate-500">読み込み中...</p>
+          <Loading />
         ) : checklistItems.length === 0 ? (
           <EmptyState>
             まだ項目がありません。上のフォームから追加してください。
@@ -210,14 +208,14 @@ export function ChecklistEditPage() {
                     <button
                       type="button"
                       onClick={() => setEditing(checklistItem)}
-                      className="rounded-md px-2 py-1 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                      className={btnSmallGhost}
                     >
                       編集
                     </button>
                     <button
                       type="button"
                       onClick={() => setDeleting(checklistItem)}
-                      className="rounded-md px-2 py-1 text-sm font-medium text-red-600 hover:bg-red-50"
+                      className={btnSmallDanger}
                     >
                       削除
                     </button>
@@ -235,7 +233,7 @@ export function ChecklistEditPage() {
           onClick={() =>
             navigate(`/properties/${propertyId}/checklists/${checklistId}/run`)
           }
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+          className={btnSecondary}
         >
           このチェックリストを実施する
         </button>

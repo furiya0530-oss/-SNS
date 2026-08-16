@@ -8,6 +8,7 @@ import { useChecklists } from '@/hooks/useChecklists'
 import { useItems } from '@/hooks/useItems'
 import { CHECKLIST_STATUS_LABELS } from '@/types'
 import type { ChecklistStatus } from '@/types'
+import { ErrorMessage, Loading } from '@/components/Feedback'
 
 interface Answer {
   status: ChecklistStatus | null
@@ -145,7 +146,7 @@ export function ChecklistRunPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">読み込み中...</p>
+        <Loading />
       ) : checklistItems.length === 0 ? (
         <EmptyState>
           このチェックリストには項目がありません。先に項目を追加してください。
@@ -261,9 +262,7 @@ export function ChecklistRunPage() {
       )}
 
       {error && (
-        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </p>
+        <ErrorMessage>{error}</ErrorMessage>
       )}
 
       {checklistItems.length > 0 && (

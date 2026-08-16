@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Modal } from '@/components/Modal'
+import { btnPrimary, btnSecondary } from '@/lib/ui'
+import { ErrorMessage } from '@/components/Feedback'
 
 interface CreateChecklistDialogProps {
   onSubmit: (title: string) => Promise<void>
@@ -60,23 +62,21 @@ export function CreateChecklistDialog({
         </div>
 
         {error && (
-          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-            {error}
-          </p>
+          <ErrorMessage>{error}</ErrorMessage>
         )}
 
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            className={btnSecondary}
           >
             キャンセル
           </button>
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            className={btnPrimary}
           >
             {submitting ? '作成中...' : '作成'}
           </button>

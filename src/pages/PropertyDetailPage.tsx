@@ -11,6 +11,8 @@ import { useItems, type ItemInput } from '@/hooks/useItems'
 import { useProperty } from '@/hooks/useProperty'
 import { countLowStock } from '@/lib/stock'
 import type { Checklist, Item } from '@/types'
+import { btnPrimary, btnSmallDanger, btnSmallGhost, btnSmallPrimary, btnSmallSecondary } from '@/lib/ui'
+import { ErrorMessage, Loading } from '@/components/Feedback'
 
 type Dialog =
   | { type: 'create' }
@@ -43,7 +45,7 @@ export function PropertyDetailPage() {
   const [dialog, setDialog] = useState<Dialog>(null)
 
   if (propertyLoading) {
-    return <p className="text-sm text-slate-500">読み込み中...</p>
+    return <Loading />
   }
 
   if (!property) {
@@ -91,7 +93,7 @@ export function PropertyDetailPage() {
           <button
             type="button"
             onClick={() => setDialog({ type: 'create' })}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            className={btnPrimary}
           >
             備品を追加
           </button>
@@ -109,12 +111,7 @@ export function PropertyDetailPage() {
       )}
 
       {error && (
-        <p
-          role="alert"
-          className="rounded-md bg-red-50 p-3 text-sm text-red-700"
-        >
-          {error}
-        </p>
+        <ErrorMessage>{error}</ErrorMessage>
       )}
 
       <section className="space-y-3">
@@ -128,7 +125,7 @@ export function PropertyDetailPage() {
         </div>
 
         {itemsLoading ? (
-          <p className="text-sm text-slate-500">読み込み中...</p>
+          <Loading />
         ) : (
           <ItemList
             items={items}
@@ -148,14 +145,14 @@ export function PropertyDetailPage() {
           <div className="flex gap-2">
             <Link
               to={`/properties/${propertyId}/records`}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              className={btnSmallSecondary}
             >
               チェック履歴
             </Link>
             <button
               type="button"
               onClick={() => setDialog({ type: 'createChecklist' })}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+              className={btnSmallSecondary}
             >
               チェックリストを作成
             </button>
@@ -163,7 +160,7 @@ export function PropertyDetailPage() {
         </div>
 
         {checklistsLoading ? (
-          <p className="text-sm text-slate-500">読み込み中...</p>
+          <Loading />
         ) : checklists.length === 0 ? (
           <EmptyState>
             まだチェックリストがありません。「チェックリストを作成」から追加してください。
@@ -181,13 +178,13 @@ export function PropertyDetailPage() {
                 <div className="flex shrink-0 gap-1">
                   <Link
                     to={`/properties/${propertyId}/checklists/${checklist.id}/run`}
-                    className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
+                    className={btnSmallPrimary}
                   >
                     実施する
                   </Link>
                   <Link
                     to={`/properties/${propertyId}/checklists/${checklist.id}`}
-                    className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                    className={btnSmallGhost}
                   >
                     編集
                   </Link>
@@ -196,7 +193,7 @@ export function PropertyDetailPage() {
                     onClick={() =>
                       setDialog({ type: 'deleteChecklist', checklist })
                     }
-                    className="rounded-md px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                    className={btnSmallDanger}
                   >
                     削除
                   </button>

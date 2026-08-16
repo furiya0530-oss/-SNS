@@ -4,6 +4,7 @@ import { useChecklistRecords } from '@/hooks/useChecklistRecords'
 import { useChecklists } from '@/hooks/useChecklists'
 import { useProperty } from '@/hooks/useProperty'
 import { formatDateTime } from '@/lib/format'
+import { ErrorMessage, Loading } from '@/components/Feedback'
 
 /** チェック履歴の一覧 (日付の新しい順) */
 export function ChecklistRecordsPage() {
@@ -28,13 +29,11 @@ export function ChecklistRecordsPage() {
       </div>
 
       {error && (
-        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </p>
+        <ErrorMessage>{error}</ErrorMessage>
       )}
 
       {loading ? (
-        <p className="text-sm text-slate-500">読み込み中...</p>
+        <Loading />
       ) : records.length === 0 ? (
         <EmptyState>
           まだ実施記録がありません。チェックリストを実施すると、ここに残ります。

@@ -8,6 +8,7 @@ import {
 import { useChecklists } from '@/hooks/useChecklists'
 import { formatDateTime } from '@/lib/format'
 import { CHECKLIST_STATUS_CLASSES, CHECKLIST_STATUS_LABELS } from '@/types'
+import { Loading } from '@/components/Feedback'
 
 /** チェック履歴の詳細 */
 export function ChecklistRecordDetailPage() {
@@ -25,7 +26,7 @@ export function ChecklistRecordDetailPage() {
   const { details, loading: detailsLoading } = useChecklistRecordDetails(recordId)
 
   if (recordsLoading) {
-    return <p className="text-sm text-slate-500">読み込み中...</p>
+    return <Loading />
   }
 
   if (!record) {
@@ -71,7 +72,7 @@ export function ChecklistRecordDetailPage() {
       )}
 
       {detailsLoading ? (
-        <p className="text-sm text-slate-500">読み込み中...</p>
+        <Loading />
       ) : details.length === 0 ? (
         <EmptyState>明細がありません。</EmptyState>
       ) : (

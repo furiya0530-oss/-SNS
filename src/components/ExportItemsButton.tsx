@@ -1,6 +1,7 @@
 import { csvDateSuffix, downloadCsv, toCsv } from '@/lib/csv'
 import { toItemCsvRows } from '@/lib/itemsCsv'
 import type { Item, Property } from '@/types'
+import { btnSmallSecondary } from '@/lib/ui'
 
 interface ExportItemsButtonProps {
   items: Item[]
@@ -25,7 +26,7 @@ export function ExportItemsButton({
       type="button"
       onClick={handleClick}
       disabled={items.length === 0}
-      className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+      className={btnSmallSecondary}
     >
       CSV書き出し
     </button>

@@ -26,17 +26,29 @@ export type PlanType = Database['public']['Enums']['plan_type']
 export type ChecklistStatus = Database['public']['Enums']['checklist_status']
 
 /**
- * 備品カテゴリ。
+ * 備品カテゴリ (要件定義書 6.1 の「アメニティ/消耗品/家電/寝具など」に対応)。
+ *
  * DB 側は自由入力の text なので、ここでの一覧は UI の選択肢という位置づけ。
+ * value は既存データと互換を保つため変更していない (表示ラベルのみ調整)。
  */
 export const ITEM_CATEGORIES = [
   { value: 'amenity', label: 'アメニティ' },
-  { value: 'linen', label: 'リネン' },
+  { value: 'consumable', label: '消耗品' },
+  { value: 'linen', label: '寝具・リネン' },
+  { value: 'appliance', label: '家電' },
+  { value: 'kitchen', label: 'キッチン用品' },
   { value: 'cleaning', label: '清掃用品' },
-  { value: 'kitchen', label: 'キッチン' },
-  { value: 'equipment', label: '設備・家電' },
   { value: 'other', label: 'その他' },
 ] as const
+
+/**
+ * 過去に使っていた値のラベル。
+ * 選択肢からは外したが、既存データが「equipment」のような生の値で
+ * 表示されてしまわないように残しておく。
+ */
+const LEGACY_CATEGORY_LABELS: Record<string, string> = {
+  equipment: '家電',
+}
 
 export type ItemCategory = (typeof ITEM_CATEGORIES)[number]['value']
 
@@ -44,7 +56,9 @@ export type ItemCategory = (typeof ITEM_CATEGORIES)[number]['value']
 export function itemCategoryLabel(category: string | null): string {
   if (!category) return '未分類'
   return (
-    ITEM_CATEGORIES.find((c) => c.value === category)?.label ?? category
+    ITEM_CATEGORIES.find((c) => c.value === category)?.label ??
+    LEGACY_CATEGORY_LABELS[category] ??
+    category
   )
 }
 

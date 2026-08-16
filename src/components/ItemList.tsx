@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { EmptyState } from '@/components/EmptyState'
 import { useItemPhotoUrls } from '@/hooks/useItemPhotoUrls'
+import { formatDate } from '@/lib/format'
 import { isLowStock } from '@/lib/stock'
 import { ITEM_CATEGORIES, itemCategoryLabel } from '@/types'
 import type { Item, Property } from '@/types'
@@ -22,8 +23,12 @@ export function ItemList({
   onDelete,
 }: ItemListProps) {
   const [category, setCategory] = useState<string>('all')
+  const [propertyFilter, setPropertyFilter] = useState<string>('all')
   const [lowStockOnly, setLowStockOnly] = useState(false)
   const photoUrls = useItemPhotoUrls(items)
+
+  // 複数物件をまたいで表示しているときだけ物件で絞り込めるようにする
+  const showPropertyFilter = Boolean(properties && properties.length > 1)
 
   // 実際に使われているカテゴリだけを絞り込みの選択肢に出す
   const availableCategories = useMemo(() => {
@@ -36,11 +41,14 @@ export function ItemList({
   const filtered = useMemo(() => {
     return items.filter((item) => {
       if (lowStockOnly && !isLowStock(item)) return false
+      if (propertyFilter !== 'all' && item.property_id !== propertyFilter) {
+        return false
+      }
       if (category === 'all') return true
       if (category === 'none') return !item.category
       return item.category === category
     })
-  }, [items, category, lowStockOnly])
+  }, [items, category, propertyFilter, lowStockOnly])
 
   const lowStockCount = items.filter(isLowStock).length
 
@@ -64,6 +72,31 @@ export function ItemList({
 
   return (
     <div className="space-y-4">
+      {/* 物件で絞り込み (全物件をまとめて見ているときのみ) */}
+      {showPropertyFilter && (
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="item-property-filter"
+            className="text-sm font-medium text-slate-700"
+          >
+            物件
+          </label>
+          <select
+            id="item-property-filter"
+            value={propertyFilter}
+            onChange={(event) => setPropertyFilter(event.target.value)}
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+          >
+            <option value="all">すべての物件</option>
+            {properties?.map((property) => (
+              <option key={property.id} value={property.id}>
+                {property.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* カテゴリ絞り込み */}
       <div className="flex flex-wrap items-center gap-2">
         {filters.map((filter) => (
@@ -152,7 +185,7 @@ export function ItemList({
                   </div>
 
                   {/* 数量の増減 */}
-                  <div className="mt-3 flex items-center gap-3">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
@@ -181,6 +214,9 @@ export function ItemList({
                     </div>
                     <span className="text-xs text-slate-500">
                       しきい値 {item.threshold}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      更新 {formatDate(item.updated_at)}
                     </span>
 
                     <div className="ml-auto flex gap-1">

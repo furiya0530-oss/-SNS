@@ -36,6 +36,11 @@ DEFAULTS = {
     "rr_body_max": 0.01,             # 実体比率しきい値:1%以下
     "rr_days": 10,                   # 判定対象の日数 N
     "rr_ratio_min": 0.60,            # 条件を満たす日の割合しきい値:60%
+    "rr_band_max": 0.10,             # 終値レンジ幅の上限:10%以内(これを超えたらトレンドとみなす)
+    "rr_use_band": True,             # 終値レンジ幅の条件を使うか
+    "rr_score_mode": "weighted",     # 独自スコアの計算方式 "weighted"=直近重視 / "ratio"=単純割合
+    # --- 絞り込み ---
+    "liquidity_filter": True,        # 売買代金が下限未満の銘柄を一覧から除外するか
 }
 
 
@@ -213,27 +218,99 @@ def flag_range_return_days(df, range_min=DEFAULTS["rr_range_min"], body_max=DEFA
     return df
 
 
+def calc_weighted_ratio(hits):
+    """
+    「直近の日ほど重く数えた」該当割合を計算する。
+
+    ■ なぜ必要か(単純な割合の弱点)
+        単純に数えるだけだと、並び順の情報が捨てられます。
+        たとえば10日間で5日該当のとき、
+            前半5日だけ該当(●●●●●・・・・・) … その状態はもう終わっている
+            後半5日だけ該当(・・・・・●●●●●) … 今まさにその状態が続いている
+        この2つが同じ 0.50 になってしまいます。デイトレで狙いたいのは明らかに後者です。
+
+    ■ 重みの付け方
+        いちばん古い日を1、最新日をNとして、直線的に重くします(10日なら 1,2,…,10)。
+        該当した日の重みを合計し、全体の重みの合計で割ります。
+        こうすると結果は必ず0〜1に収まり、単純な割合と同じ感覚で読めます。
+    """
+    n = len(hits)
+    if n == 0:
+        return 0.0
+    weights = list(range(1, n + 1))          # 古い日ほど小さく、新しい日ほど大きい重み
+    hit_weight = sum(w for h, w in zip(hits, weights) if h)
+    return hit_weight / sum(weights)
+
+
+def calc_recent_streak(hits):
+    """
+    最新日から数えて「何日連続で該当しているか」を返す。
+
+    スコアには直接使いませんが、一覧に表示することで
+    「今この瞬間もその状態が続いているか」がひと目で分かるようにします。
+    同点の銘柄を並べるときの優先順位にも使います。
+    """
+    streak = 0
+    for hit in reversed(hits):    # 最新日から古い方へさかのぼる
+        if not hit:
+            break
+        streak += 1
+    return streak
+
+
+def calc_close_band(closes):
+    """
+    終値がどれだけの幅に収まっているかを返す。
+
+        終値レンジ幅 = (期間中の最高終値 − 最安終値) ÷ 期間中の平均終値
+
+    ■ なぜ必要か(1日ごとの形だけを見る弱点)
+        「値幅が大きく実体が小さい日」を数えるだけだと、
+        毎日きれいに行って来いなのに、日をまたぐギャップで少しずつ切り上がっていく
+        “階段状のトレンド銘柄”も満点になってしまいます。
+        本当に狙いたいのは、一定の帯の中を往復している銘柄です。
+        そこで期間全体を通した値動きの幅も確かめます。
+
+    平均で割っているのは、株価の水準(100円の株か5000円の株か)に左右されず、
+    %として比較できるようにするためです。
+    """
+    if len(closes) == 0:
+        return float("nan")
+    mean = closes.mean()
+    if mean <= 0:
+        return float("nan")
+    return (closes.max() - closes.min()) / mean
+
+
 def evaluate_range_return(
     df,
     range_min=DEFAULTS["rr_range_min"],
     body_max=DEFAULTS["rr_body_max"],
     days=DEFAULTS["rr_days"],
     ratio_min=DEFAULTS["rr_ratio_min"],
+    band_max=DEFAULTS["rr_band_max"],
+    use_band=DEFAULTS["rr_use_band"],
+    score_mode=DEFAULTS["rr_score_mode"],
 ):
     """
-    銘柄ごとに「直近N日のうち何割が該当日か」を集計する。
+    銘柄ごとに、直近N日の状態を集計して独自スコアを出す。
 
     引数:
-        range_min : 値幅率しきい値      (初期値 0.03)
-        body_max  : 実体比率しきい値    (初期値 0.01)
-        days      : 判定対象の日数 N    (初期値 10)
-        ratio_min : 割合しきい値        (初期値 0.60)
+        range_min  : 値幅率しきい値       (初期値 0.03)
+        body_max   : 実体比率しきい値     (初期値 0.01)
+        days       : 判定対象の日数 N     (初期値 10)
+        ratio_min  : 割合しきい値         (初期値 0.60)
+        band_max   : 終値レンジ幅の上限   (初期値 0.10)
+        use_band   : レンジ幅の条件を使うか(初期値 True)
+        score_mode : "weighted"=直近重視 / "ratio"=単純割合(要件書どおりの計算)
 
     戻り値: (集計結果の表, ○×履歴つきの全日データ)
-        集計結果の列:
-            銘柄コード / 銘柄名 / 判定日数 / 該当日数 / 該当割合 / 独自スコア / 独自条件クリア
-        ※ 独自スコア = 該当割合(0〜1)。要件どおり、割合そのものをスコアにしています。
-          高いほど「レンジ回帰の状態が長く続いている」ことを意味します。
+
+    ■ 独自スコアの決まり方
+        1. 該当日の割合を出す(score_mode に応じて 単純割合 か 直近重視 のどちらか)
+        2. 終値レンジ幅が上限を超えていたら、スコアを0にする
+           → 「レンジ内を往復している」という前提が崩れているので、候補から外す意味です。
+             なぜ0なのかは「除外理由」の列に残すので、画面で理由を確認できます。
     """
     flagged = flag_range_return_days(df, range_min, body_max)
 
@@ -241,25 +318,45 @@ def evaluate_range_return(
     for code, group in flagged.groupby("銘柄コード"):
         # 日付順に並べたうえで、末尾からN日分(=直近N日)だけを切り出します。
         recent = group.sort_values("日付").tail(days)
-
-        # データがN日に満たない銘柄でも、あるだけの日数で割合を計算します(0除算は回避)。
         n = len(recent)
-        hit = int(recent["該当日"].sum())
-        ratio = hit / n if n > 0 else 0.0
+        hits = list(recent["該当日"])
+
+        hit_count = int(sum(hits))
+        simple_ratio = hit_count / n if n > 0 else 0.0
+        weighted_ratio = calc_weighted_ratio(hits)
+        streak = calc_recent_streak(hits)
+        band = calc_close_band(recent["終値"])
+
+        # 使うスコア方式を選ぶ(画面のラジオボタンで切り替えられます)
+        base_score = weighted_ratio if score_mode == "weighted" else simple_ratio
+
+        # レンジ幅の条件。use_band が False のときは常に「レンジ内」として扱います。
+        in_band = True if not use_band else (pd.notna(band) and band <= band_max)
+        reason = "" if in_band else f"終値レンジ幅 {band:.1%} > {band_max:.0%}"
+
+        score = base_score if in_band else 0.0
 
         rows.append({
             "銘柄コード": code,
             "銘柄名": recent["銘柄名"].iloc[-1],
             "判定日数": n,
-            "該当日数": hit,
-            "該当割合": ratio,
-            "独自スコア": ratio,
-            "独自条件クリア": ratio >= ratio_min,
+            "該当日数": hit_count,
+            "該当割合": simple_ratio,
+            "直近重視割合": weighted_ratio,
+            "連続該当日数": streak,
+            "終値レンジ幅": band,
+            "レンジ内": in_band,
+            "除外理由": reason,
+            "独自スコア": score,
+            "独自条件クリア": bool(score >= ratio_min and in_band),
         })
 
     summary = pd.DataFrame(rows)
     if not summary.empty:
-        summary = summary.sort_values("独自スコア", ascending=False).reset_index(drop=True)
+        # 同点のときは「連続該当日数」が多い銘柄を上にします(今も続いているほうを優先)。
+        summary = summary.sort_values(
+            ["独自スコア", "連続該当日数"], ascending=[False, False]
+        ).reset_index(drop=True)
 
     return summary, flagged
 
@@ -357,4 +454,6 @@ if __name__ == "__main__":
     data = load_sample_data()
     summary, _ = evaluate_range_return(data)
     print("=== 独自条件(レンジ回帰型)の判定結果 ===")
-    print(summary.to_string(index=False))
+    print(summary[["銘柄コード", "銘柄名", "該当日数", "該当割合", "直近重視割合",
+                   "連続該当日数", "終値レンジ幅", "独自スコア", "独自条件クリア",
+                   "除外理由"]].to_string(index=False))

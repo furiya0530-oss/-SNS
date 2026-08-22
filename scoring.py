@@ -60,9 +60,13 @@ def combine_scores(
     """
     # 銘柄コードをキーにして2つの表を横に連結します(merge = 表の結合)。
     # how="outer" にすると、どちらか片方にしかない銘柄も欠けずに残ります。
+    unique_columns = [
+        "銘柄コード", "判定日数", "該当日数", "該当割合", "直近重視割合",
+        "連続該当日数", "終値レンジ幅", "レンジ内", "除外理由", "独自スコア", "独自条件クリア",
+    ]
     merged = pd.merge(
         standard_df,
-        unique_df[["銘柄コード", "判定日数", "該当日数", "該当割合", "独自スコア", "独自条件クリア"]],
+        unique_df[unique_columns],
         on="銘柄コード",
         how="outer",
     )
@@ -90,14 +94,12 @@ def combine_scores(
         merged["標準スコア"] * weight_standard + merged["独自スコア"] * weight_unique
     ) / total_weight
 
-    # 総合スコアの高い順に並べ替え。同点の場合は独自スコアが高いほうを上にします
-    # (このツールの主眼が独自条件のため)。
+    # 総合スコアの高い順に並べ替え。同点の場合は独自スコア、さらに同点なら
+    # 連続該当日数が多いほう(=今も状態が続いているほう)を上にします。
+    merged["連続該当日数"] = merged["連続該当日数"].fillna(0)
     merged = merged.sort_values(
-        ["総合スコア", "独自スコア"], ascending=[False, False]
+        ["総合スコア", "独自スコア", "連続該当日数"], ascending=[False, False, False]
     ).reset_index(drop=True)
-
-    # 順位の列を1から振ります(画面で見やすくするため)。
-    merged.insert(0, "順位", range(1, len(merged) + 1))
 
     return merged
 
@@ -113,7 +115,7 @@ def build_ranking(data, params):
         data   : data_loader が返した表
         params : しきい値をまとめた辞書(screening.DEFAULTS と同じキー + 重み)
 
-    戻り値: (一覧表, 独自条件の○×履歴つき全日データ, 標準指標つき全日データ)
+    戻り値: (一覧表, 独自条件の○×履歴つき全日データ, 標準指標つき全日データ, 除外された銘柄の表)
     """
     # import をファイルの先頭ではなく関数の中に書いているのは、
     # scoring.py 単体でも読みやすくするためです(循環インポートの予防も兼ねています)。
@@ -134,6 +136,9 @@ def build_ranking(data, params):
         body_max=params["rr_body_max"],
         days=params["rr_days"],
         ratio_min=params["rr_ratio_min"],
+        band_max=params.get("rr_band_max", screening.DEFAULTS["rr_band_max"]),
+        use_band=params.get("rr_use_band", screening.DEFAULTS["rr_use_band"]),
+        score_mode=params.get("rr_score_mode", screening.DEFAULTS["rr_score_mode"]),
     )
 
     ranking = combine_scores(
@@ -143,7 +148,22 @@ def build_ranking(data, params):
         weight_unique=params.get("weight_unique", DEFAULT_WEIGHT_UNIQUE),
     )
 
-    return ranking, flagged, enriched
+    # --- 流動性による足切り ---
+    # 売買代金が下限に届かない銘柄は、スコアが高くても実際には売買が成立しにくいため、
+    # 「減点」ではなく「一覧から除外」します。
+    # なぜ減点ではダメか:減点でも上位に残ってしまい、実際には手が出せない銘柄を
+    # 追いかけることになるためです。除外した銘柄は別の表で返し、画面で確認できるようにします。
+    if params.get("liquidity_filter", screening.DEFAULTS["liquidity_filter"]):
+        excluded = ranking[~ranking["売買代金OK"]].copy()
+        ranking = ranking[ranking["売買代金OK"]].copy()
+    else:
+        excluded = ranking.iloc[0:0].copy()   # 空の表(列の形は同じ)
+
+    # 除外後に順位を振り直します(1位から欠番なく並ぶように)
+    ranking = ranking.reset_index(drop=True)
+    ranking.insert(0, "順位", range(1, len(ranking) + 1))
+
+    return ranking, flagged, enriched, excluded
 
 
 # 動作確認用:「python scoring.py」で総合ランキングを表示します。
@@ -156,9 +176,12 @@ if __name__ == "__main__":
     params["weight_standard"] = DEFAULT_WEIGHT_STANDARD
     params["weight_unique"] = DEFAULT_WEIGHT_UNIQUE
 
-    ranking, _, _ = build_ranking(data, params)
+    ranking, _, _, excluded = build_ranking(data, params)
 
     columns = ["順位", "銘柄コード", "銘柄名", "総合スコア", "標準スコア", "独自スコア",
-               "標準条件充足数", "独自条件クリア"]
+               "連続該当日数", "標準条件充足数", "独自条件クリア"]
     print("=== 総合ランキング ===")
     print(ranking[columns].to_string(index=False))
+    if not excluded.empty:
+        print("\n=== 売買代金の下限に届かず除外した銘柄 ===")
+        print(excluded[["銘柄コード", "銘柄名", "売買代金", "独自スコア"]].to_string(index=False))

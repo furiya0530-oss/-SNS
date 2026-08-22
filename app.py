@@ -132,6 +132,29 @@ rr_ratio_min = st.sidebar.slider(
     help="直近N日のうち、該当日がこの割合以上ある銘柄を『クリア』とします",
 )
 
+# スコアの数え方。単純な割合だと「並び順」の情報が捨てられてしまうため、
+# 直近の日を重く数える方式を初期値にしています(詳しくは screening.calc_weighted_ratio)。
+rr_score_mode = st.sidebar.radio(
+    "独自スコアの数え方",
+    options=["weighted", "ratio"],
+    format_func=lambda x: "直近重視（直近の日ほど重く数える）" if x == "weighted" else "単純割合（要件書どおり）",
+    index=0 if D["rr_score_mode"] == "weighted" else 1,
+    help="『前半だけ該当』と『直近が該当』を区別したいときは直近重視を選びます",
+)
+
+# 終値レンジ幅の条件。1日ごとの形だけを見ると、毎日行って来いなのに
+# 日をまたいで切り上がっていく“階段状のトレンド銘柄”を拾ってしまうため、
+# 期間全体の値動きの幅もあわせて確認します。
+rr_use_band = st.sidebar.checkbox(
+    "終値レンジ幅の条件を使う", value=D["rr_use_band"],
+    help="オフにすると、階段状に上がり続ける銘柄も候補に含まれます",
+)
+rr_band_max = st.sidebar.slider(
+    "終値レンジ幅の上限", 0.01, 0.50, D["rr_band_max"], 0.01, format="%.2f",
+    disabled=not rr_use_band,
+    help="(直近N日の最高終値 − 最安終値) ÷ 平均終値。これを超えたらトレンドとみなしてスコアを0にします",
+)
+
 st.sidebar.header("3. 標準条件")
 turnover_min_oku = st.sidebar.slider(
     "売買代金の下限（億円）", 0, 100, int(D["turnover_min"] / 1e8), 1,
@@ -150,6 +173,13 @@ gap_rate_min = st.sidebar.slider(
     help="(始値 − 前日終値) ÷ 前日終値。上下どちらでも大きく跳べばOK",
 )
 
+# 売買代金は「減点」ではなく「足切り」にします。
+# 減点だと、実際には売買が成立しにくい銘柄が上位に残ってしまうためです。
+liquidity_filter = st.sidebar.checkbox(
+    "売買代金が下限未満の銘柄を一覧から除外する", value=D["liquidity_filter"],
+    help="オフにすると、除外せず減点のみで扱います",
+)
+
 st.sidebar.header("4. 総合スコアの重み")
 weight_standard = st.sidebar.slider("標準条件の重み", 0.0, 1.0, scoring.DEFAULT_WEIGHT_STANDARD, 0.1)
 weight_unique = st.sidebar.slider("独自条件の重み", 0.0, 1.0, scoring.DEFAULT_WEIGHT_UNIQUE, 0.1)
@@ -166,6 +196,10 @@ params = {
     "rr_body_max": rr_body_max,
     "rr_days": rr_days,
     "rr_ratio_min": rr_ratio_min,
+    "rr_band_max": rr_band_max,
+    "rr_use_band": rr_use_band,
+    "rr_score_mode": rr_score_mode,
+    "liquidity_filter": liquidity_filter,
     "weight_standard": weight_standard,
     "weight_unique": weight_unique,
 }
@@ -175,7 +209,7 @@ params = {
 # 3. 計算の実行
 # ============================================================
 try:
-    ranking, flagged, enriched = scoring.build_ranking(data, params)
+    ranking, flagged, enriched, excluded = scoring.build_ranking(data, params)
 except Exception as e:
     st.error(f"計算中にエラーが発生しました: {e}")
     st.stop()
@@ -191,6 +225,20 @@ col1.metric("対象銘柄数", f"{len(ranking)} 銘柄")
 col2.metric("独自条件クリア", f"{int(ranking['独自条件クリア'].sum())} 銘柄")
 col3.metric("標準条件すべてクリア", f"{int((ranking['標準条件充足数'] == 5).sum())} 銘柄")
 
+# 足切りで除外した銘柄は、隠したままにせず理由とあわせて確認できるようにします。
+if not excluded.empty:
+    with st.expander(f"売買代金の下限に届かず除外した銘柄：{len(excluded)} 銘柄"):
+        show = excluded.copy()
+        show["売買代金(億円)"] = (show["売買代金"] / 1e8).round(2)
+        st.dataframe(
+            show[["銘柄コード", "銘柄名", "売買代金(億円)", "独自スコア", "連続該当日数"]],
+            hide_index=True, width="stretch",
+        )
+        st.caption(
+            "独自スコアが高くても、売買代金が小さい銘柄は実際には売買が成立しにくいため除外しています。"
+            "サイドバーのチェックを外すと一覧に戻せます。"
+        )
+
 only_unique = st.checkbox("独自条件をクリアした銘柄だけ表示する", value=False)
 view = ranking[ranking["独自条件クリア"]] if only_unique else ranking
 
@@ -203,6 +251,14 @@ else:
         display[col] = display[col].map({True: "✓", False: "−"})
 
     display["売買代金(億円)"] = (display["売買代金"] / 1e8).round(1)
+    display["連続"] = display["連続該当日数"].astype(int).map(lambda d: f"{d}日" if d else "−")
+
+    # Streamlit の書式 "%.2f%%" は、値をそのまま表示して末尾に % を足すだけです。
+    # 0.045(=4.5%)をそのまま渡すと「0.05%」と表示されてしまうため、
+    # 表示用にあらかじめ100倍した列を用意します。
+    for src, dst in [("日中値幅率", "日中値幅率(%)"), ("ギャップ率", "ギャップ率(%)"),
+                     ("終値レンジ幅", "終値レンジ幅(%)")]:
+        display[dst] = display[src] * 100
     display["独自条件 該当"] = display.apply(
         lambda r: f"{int(r['該当日数'])}/{int(r['判定日数'])} 日", axis=1
     )
@@ -210,9 +266,9 @@ else:
     st.dataframe(
         display[[
             "順位", "銘柄コード", "銘柄名", "総合スコア", "独自スコア", "独自条件 該当",
-            "独自条件クリア", "標準スコア",
+            "連続", "終値レンジ幅(%)", "除外理由", "独自条件クリア", "標準スコア",
             "売買代金OK", "出来高急増OK", "値幅OK", "ギャップOK", "移動平均OK",
-            "売買代金(億円)", "出来高急増率", "日中値幅率", "ギャップ率", "MAクロス",
+            "売買代金(億円)", "出来高急増率", "日中値幅率(%)", "ギャップ率(%)", "MAクロス",
         ]],
         hide_index=True,
         width="stretch",
@@ -225,13 +281,19 @@ else:
                 "独自スコア", min_value=0, max_value=1, format="%.2f"
             ),
             "標準スコア": st.column_config.NumberColumn("標準スコア", format="%.2f"),
+            "終値レンジ幅(%)": st.column_config.NumberColumn("終値レンジ幅", format="%.1f%%"),
+            "連続": st.column_config.TextColumn("連続", help="最新日から数えて何日連続で該当しているか"),
+            "除外理由": st.column_config.TextColumn("除外理由", help="独自スコアが0になった理由"),
             "出来高急増率": st.column_config.NumberColumn("出来高急増率", format="%.2f 倍"),
-            "日中値幅率": st.column_config.NumberColumn("日中値幅率", format="%.2f%%"),
-            "ギャップ率": st.column_config.NumberColumn("ギャップ率", format="%.2f%%"),
+            "日中値幅率(%)": st.column_config.NumberColumn("日中値幅率", format="%.2f%%"),
+            "ギャップ率(%)": st.column_config.NumberColumn("ギャップ率", format="%.2f%%"),
         },
     )
     st.caption(
         "✓ = 条件を満たす / − = 満たさない　"
+        "「連続」= 最新日から何日連続で該当しているか。"
+        "「除外理由」が入っている銘柄は、日々の形は条件を満たしていても"
+        "期間全体では値動きが片方向に偏っているため、独自スコアを0にしています。"
         "※「日中値幅率」「ギャップ率」は前日終値を基準にした標準条件の値です。"
     )
 
@@ -242,7 +304,9 @@ else:
 st.header("銘柄詳細")
 
 # 選択肢は「コード: 銘柄名」の形にして、同名銘柄があっても区別できるようにします。
-options = [f"{r['銘柄コード']}: {r['銘柄名']}" for _, r in ranking.iterrows()]
+# 足切りで除外した銘柄も、中身を確認できるよう選択肢には残します。
+selectable = pd.concat([ranking, excluded], ignore_index=True) if not excluded.empty else ranking
+options = [f"{r['銘柄コード']}: {r['銘柄名']}" for _, r in selectable.iterrows()]
 selected = st.selectbox("銘柄を選ぶ（一覧の上位から順に並んでいます）", options)
 selected_code = selected.split(":")[0]
 
@@ -311,20 +375,34 @@ st.caption(
 history = detail.tail(rr_days).copy()
 history["日付"] = history["日付"].dt.strftime("%Y-%m-%d")
 history["判定"] = history["該当日"].map({True: "✓ 該当", False: "−"})
+# 一覧表と同じ理由で、%表示する列はあらかじめ100倍しておきます
+history["値幅率(%)"] = history["値幅率(始値基準)"] * 100
+history["実体比率(%)"] = history["実体比率"] * 100
 
 st.dataframe(
-    history[["日付", "始値", "高値", "安値", "終値", "値幅率(始値基準)", "実体比率", "判定"]],
+    history[["日付", "始値", "高値", "安値", "終値", "値幅率(%)", "実体比率(%)", "判定"]],
     hide_index=True,
     width="stretch",
     column_config={
-        "値幅率(始値基準)": st.column_config.NumberColumn("値幅率(始値基準)", format="%.2f%%"),
-        "実体比率": st.column_config.NumberColumn("実体比率", format="%.2f%%"),
+        "値幅率(%)": st.column_config.NumberColumn("値幅率(始値基準)", format="%.2f%%"),
+        "実体比率(%)": st.column_config.NumberColumn("実体比率", format="%.2f%%"),
     },
 )
 
-hit_count = int(history["該当日"].sum())
-st.info(
-    f"**{selected}** ： 直近 {len(history)} 日のうち **{hit_count} 日** が該当 "
-    f"→ 独自スコア **{hit_count / len(history):.2f}**"
-    f"（クリア基準 {rr_ratio_min:.0%}）"
+# 一覧表から、この銘柄の集計結果をそのまま持ってきて表示します
+# (画面上の説明と一覧の数字が食い違わないよう、再計算はしません)。
+row = selectable[selectable["銘柄コード"] == selected_code].iloc[0]
+hit_count = int(row["該当日数"])
+
+message = (
+    f"**{selected}** ： 直近 {int(row['判定日数'])} 日のうち **{hit_count} 日** が該当"
+    f"（単純割合 {row['該当割合']:.2f} / 直近重視 {row['直近重視割合']:.2f}、"
+    f"連続 {int(row['連続該当日数'])} 日）　"
+    f"終値レンジ幅 {row['終値レンジ幅']:.1%}"
+    f"　→ 独自スコア **{row['独自スコア']:.2f}**（クリア基準 {rr_ratio_min:.0%}）"
 )
+if row["除外理由"]:
+    st.warning(message + f"\n\n⚠ {row['除外理由']} のため、独自スコアを0にしています。"
+                         "日々は行って来いの形でも、期間全体では値動きが片方向に偏っている銘柄です。")
+else:
+    st.info(message)

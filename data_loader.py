@@ -13,6 +13,8 @@ data_loader.py : データを「読み込んで」「整える」係。
     → この考え方を「関心の分離」と呼びます。
 """
 
+import os
+
 import pandas as pd
 
 # ------------------------------------------------------------
@@ -180,8 +182,16 @@ def load_from_csv(source):
     return clean_dataframe(raw)
 
 
-def load_sample_data(path="sample_data/sample.csv"):
-    """動作確認用のサンプルCSVを読み込む(画面の「サンプルデータを使う」ボタン用)。"""
+def load_sample_data(path=None):
+    """
+    動作確認用のサンプルCSVを読み込む(画面の「サンプルデータを使う」ボタン用)。
+
+    ファイルの場所は「このファイル(data_loader.py)から見た位置」で指定しています。
+    "sample_data/sample.csv" と単純に書くと、
+    どのフォルダでコマンドを実行したかによって見つからなくなるためです。
+    """
+    if path is None:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sample_data", "sample.csv")
     return load_from_csv(path)
 
 

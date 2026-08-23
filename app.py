@@ -53,41 +53,128 @@ uploaded = st.sidebar.file_uploader(
 use_sample = st.sidebar.button("サンプルデータを使う", width="stretch")
 
 # --- 読み込み処理 ---
+# アップロードされたファイルは、いきなり整形せず「生の表」としていったん受け取ります。
+# 列名がCSVごとに違うため、どの列を何として使うかを画面で確認・調整できるようにするためです。
 # try-except で囲み、エラーが起きても画面が真っ白にならず、
 # 「何が原因か」が日本語で表示されるようにしています。
 if uploaded is not None:
-    try:
-        st.session_state["data"] = data_loader.load_from_csv(uploaded)
-        st.session_state["source_name"] = uploaded.name
-    except data_loader.DataValidationError as e:
-        st.sidebar.error(f"読み込めませんでした\n\n{e}")
-    except Exception as e:
-        st.sidebar.error(f"予期しないエラーが発生しました: {e}")
+    # 同じファイルを読み直すたびに設定がリセットされないよう、ファイル名で覚えておきます。
+    if st.session_state.get("raw_name") != uploaded.name:
+        try:
+            st.session_state["raw"] = data_loader.read_csv_file(uploaded)
+            st.session_state["raw_name"] = uploaded.name
+            st.session_state.pop("data", None)   # 前のデータは破棄
+        except data_loader.DataValidationError as e:
+            st.sidebar.error(f"読み込めませんでした\n\n{e}")
+        except Exception as e:
+            st.sidebar.error(f"予期しないエラーが発生しました: {e}")
 
 elif use_sample:
     try:
         st.session_state["data"] = data_loader.load_sample_data()
         st.session_state["source_name"] = "sample_data/sample.csv（サンプル）"
+        st.session_state.pop("raw", None)        # 列対応のUIは不要なので消す
+        st.session_state.pop("raw_name", None)
     except Exception as e:
         st.sidebar.error(f"サンプルデータを読み込めませんでした: {e}")
+
+
+# ============================================================
+# 1b. 列の対応づけ（アップロードされたCSV専用）
+#
+# 実際の証券会社のCSVは列名がまちまち（「終値」が「引値」、「出来高」が「売買高」など）です。
+# まず自動で推測し、当たらなかった項目だけ画面で選んでもらう方針にしています。
+# ============================================================
+raw = st.session_state.get("raw")
+
+if raw is not None:
+    guessed = data_loader.guess_column_map(raw.columns)
+    # 銘柄名は無くても計算できるので、足りているかの判定からは外します。
+    unresolved = [c for c in data_loader.ESSENTIAL_COLUMNS if not guessed.get(c)]
+    auto_ok = len(unresolved) == 0
+
+    # 自動で全部当たっていて、まだ読み込んでいないなら、そのまま読み込んでしまいます。
+    if auto_ok and "data" not in st.session_state:
+        try:
+            st.session_state["data"] = data_loader.clean_dataframe(raw, column_map=guessed)
+            st.session_state["source_name"] = st.session_state["raw_name"]
+        except data_loader.DataValidationError as e:
+            st.error(f"読み込めませんでした\n\n{e}")
+
+    title = ("列の対応（自動で判別できました。変更したい場合は開いてください）" if auto_ok
+             else "⚠ 列の対応を指定してください（自動で判別できない項目があります）")
+
+    with st.expander(title, expanded=not auto_ok):
+        st.caption("アップロードされたファイルの先頭5行")
+        st.dataframe(raw.head(), width="stretch")
+
+        st.markdown("**どの列をどの項目として使うか**")
+        options = ["（なし）"] + list(raw.columns)
+        column_map, fixed_values = {}, {}
+
+        # 項目を2列に分けて表示（縦に長くなりすぎないように）
+        left, right = st.columns(2)
+        for i, target in enumerate(data_loader.REQUIRED_COLUMNS):
+            box = left if i % 2 == 0 else right
+            default = guessed.get(target)
+            index = options.index(default) if default in options else 0
+            choice = box.selectbox(target, options, index=index, key=f"map_{target}")
+            column_map[target] = None if choice == "（なし）" else choice
+
+        # 銘柄コード・銘柄名の列が無いCSV（1銘柄だけのファイル）向けの手入力欄
+        if column_map["銘柄コード"] is None:
+            st.info(
+                "銘柄コードの列が見つかりません。"
+                "1銘柄だけのファイルの場合は、下に直接入力してください。"
+            )
+            c1, c2 = st.columns(2)
+            fixed_values["銘柄コード"] = c1.text_input("銘柄コード（手入力）", key="fix_code")
+            fixed_values["銘柄名"] = c2.text_input("銘柄名（手入力・省略可）", key="fix_name")
+
+        if st.button("この対応で読み込む", type="primary"):
+            try:
+                st.session_state["data"] = data_loader.clean_dataframe(
+                    raw, column_map=column_map, fixed_values=fixed_values
+                )
+                st.session_state["source_name"] = st.session_state["raw_name"]
+                st.success("読み込みました。")
+            except data_loader.DataValidationError as e:
+                st.error(f"読み込めませんでした\n\n{e}")
+            except Exception as e:
+                st.error(f"予期しないエラーが発生しました: {e}")
 
 data = st.session_state.get("data")
 
 # データがまだ無いときは、案内だけ出して処理を止めます。
 # st.stop() は「ここで実行を打ち切る」命令。以降のコードはエラーになりません。
 if data is None:
-    st.info(
-        "左のサイドバーから CSV をアップロードするか、"
-        "**「サンプルデータを使う」** ボタンを押してください。"
+    # アップロード済みで、列の対応待ちなのか。それともまだ何も無いのかで案内を変えます。
+    if raw is not None:
+        st.info(
+            "上の **「列の対応」** で、どの列をどの項目として使うかを指定し、"
+            "**「この対応で読み込む」** を押してください。"
+        )
+    else:
+        st.info(
+            "左のサイドバーから CSV をアップロードするか、"
+            "**「サンプルデータを使う」** ボタンを押してください。"
+        )
+    st.caption(
+        "列名は「終値」が「引値」、「出来高」が「売買高」のように違っていても、"
+        "自動で対応付けます。判別できない場合は画面で指定できます。"
     )
-    st.subheader("CSVの必要な形式")
+    st.subheader("CSVの必要な項目")
     st.dataframe(
         pd.DataFrame(
             {
                 "列名": data_loader.REQUIRED_COLUMNS,
-                "内容": ["証券コード", "銘柄の名称", "対象日(例 2026-08-21)",
+                "内容": ["証券コード", "銘柄の名称（無い場合はコードで代用）",
+                        "対象日（2026-08-21 / 2026/8/21 / 20260821 など）",
                         "その日の最初の値段", "その日の最高値", "その日の最安値",
                         "その日の最後の値段", "売買された株数"],
+                "よくある別名": ["コード, 証券コード, Code", "名称, 銘柄, Name",
+                            "年月日, 取引日, Date", "寄付, 寄値, Open", "高, High",
+                            "安, Low", "引値, 大引, Close", "売買高, Volume"],
             }
         ),
         hide_index=True,

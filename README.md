@@ -98,6 +98,24 @@ python -m streamlit run app.py
 > PC に複数の Python が入っている場合に、別の Python 側にライブラリが入ってしまう事故も防げます。
 > macOS / Linux では `python` を `python3` に読み替えてください。
 
+### 実データを取得する（任意）
+
+サンプルではなく実際の株価で試すときは、取得スクリプトを使えます。
+
+```bash
+python -m pip install yfinance          # 最初の1回だけ
+python fetch_data.py                    # 内蔵の主要109銘柄・直近90日分
+```
+
+`data/stocks_YYYYMMDD.csv` が作られるので、画面からアップロードしてください。
+
+```bash
+python fetch_data.py --codes 7203,6758,9984 --days 120   # 銘柄と期間を指定
+python fetch_data.py --file codes_example.txt            # 銘柄リストのファイルを使う
+```
+
+詳しくは下の「6. 実データの取得（fetch_data.py）」を参照してください。
+
 ### 操作の流れ
 
 1. 左のサイドバーで **「サンプルデータを使う」** を押す（または自分のCSVをアップロード）
@@ -159,6 +177,8 @@ python -m streamlit run app.py
 ```
 .
 ├── app.py                    画面（Streamlit）。計算はせず、表示だけを担当
+├── fetch_data.py             株価を自動取得してCSVを作るスクリプト（任意）
+├── codes_example.txt         取得したい銘柄リストの見本
 ├── data_loader.py            CSVの読み込み・検証・型変換。★将来ここをAPIに差し替える
 ├── screening.py              標準条件・独自条件の計算。このツールの計算エンジン
 ├── scoring.py                スコアの合算とランキング
@@ -238,7 +258,58 @@ python scoring.py       # 総合ランキング
 
 ---
 
-## 6. 今後の予定
+## 6. 実データの取得（fetch_data.py）
+
+証券会社のサイトから毎回CSVをダウンロードする代わりに、
+銘柄コードを指定して株価をまとめて取得し、このツールが読める形のCSVを作るスクリプトです。
+
+### 準備（最初の1回だけ）
+
+```bash
+python -m pip install yfinance
+```
+
+### 使い方
+
+| コマンド | 内容 |
+|---|---|
+| `python fetch_data.py` | 内蔵の主要109銘柄・直近90日分 |
+| `python fetch_data.py --days 120` | 期間を指定（営業日でおよそ80日分） |
+| `python fetch_data.py --codes 7203,6758` | 銘柄を指定 |
+| `python fetch_data.py --file codes_example.txt` | 銘柄リストのファイルを使う |
+| `python fetch_data.py --out my.csv` | 出力先を指定 |
+
+出力先の既定は `data/stocks_YYYYMMDD.csv` です（`data/` はGit管理から除外しています）。
+
+### 銘柄リストのファイル形式
+
+```
+# 「#」で始まる行はメモとして無視されます
+7203,トヨタ自動車
+6758,ソニーグループ
+9984                 ← 銘柄名は省略できます
+```
+
+### データの入手元について
+
+Yahoo Finance の公開データを `yfinance` というライブラリ経由で取得しています。
+**証券会社の口座もAPIキーも不要**で、Windows / Mac のどちらでも動きます。
+
+ただし公式に保証されたサービスではないため、将来仕様が変わる可能性があります。
+そのため取得部分（`fetch_data.py`）と計算部分（`screening.py`）は完全に分けてあり、
+入手元を変えるときは `fetch_data.py` を差し替えるだけで済みます。
+
+### 何日分を指定すればよいか
+
+`--days` はカレンダー上の日数です。土日祝を除くと営業日はおよそ7割になります。
+
+| 指定 | 営業日でおよそ | 用途 |
+|---|---|---|
+| `--days 30` | 20日 | 独自条件の判定だけなら十分 |
+| `--days 90`（既定） | 60日 | 25日移動平均も表示できる |
+| `--days 180` | 120日 | 判定日数Nを大きくして試したいとき |
+
+## 7. 今後の予定
 
 | フェーズ | 内容 |
 |---|---|

@@ -76,19 +76,27 @@
 ### インストール（最初の1回だけ）
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### 起動
 
 ```bash
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 自動でブラウザが開きます。開かない場合は、ターミナルに表示される
 `http://localhost:8501` をブラウザのアドレス欄に貼り付けてください。
 
 終了するときは、ターミナルで `Ctrl + C` を押します。
+
+> **`python -m` を付けている理由**
+> `pip install …` や `streamlit run …` と短く書いても動きますが、Windows では
+> `'streamlit' は、内部コマンドまたは外部コマンド…として認識されていません` と出ることがよくあります。
+> `streamlit` の実体は `Scripts` フォルダに置かれ、そこが PATH に入っていないと Windows が見つけられないためです。
+> `python -m` は「Python 自身に実行してもらう」書き方なので、PATH の設定に左右されません。
+> PC に複数の Python が入っている場合に、別の Python 側にライブラリが入ってしまう事故も防げます。
+> macOS / Linux では `python` を `python3` に読み替えてください。
 
 ### 操作の流れ
 

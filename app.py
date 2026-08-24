@@ -28,14 +28,15 @@ import screening
 # 画面全体の設定(いちばん最初に1回だけ呼ぶ決まりです)
 # ------------------------------------------------------------
 st.set_page_config(
-    page_title="デイトレ銘柄スクリーニング",
-    page_icon="📈",
+    page_title="ヨコヨコ銘柄発見器",
+    page_icon="📊",
     layout="wide",  # 横幅いっぱいに使う(表の列が多いため)
 )
 
-st.title("📈 デイトレ銘柄スクリーニングツール（フェーズ1）")
+st.title("📊 ヨコヨコ銘柄発見器")
 st.caption(
-    "CSVの日足データから、標準条件と独自条件（レンジ回帰型ボラティリティ）で銘柄を絞り込みます。"
+    "日中はよく動くのに、終わってみれば始値とほぼ同じ値段 —— "
+    "そんな「ヨコヨコなのに値動きが激しい」銘柄を探します。"
 )
 
 
@@ -200,29 +201,29 @@ st.sidebar.success(
 # ============================================================
 D = screening.DEFAULTS
 
-st.sidebar.header("2. 独自条件（レンジ回帰型）")
-st.sidebar.caption("★このツールの主役の条件です")
+st.sidebar.header("2. ヨコヨコ条件")
+st.sidebar.caption("★このツールの主役。ここを調整して銘柄を絞ります")
 
 rr_range_min = st.sidebar.slider(
     "値幅率のしきい値（この値以上）", 0.0, 0.15, D["rr_range_min"], 0.005,
     format="%.3f",
-    help="(高値 − 安値) ÷ 始値。大きいほど『よく動いた日』",
+    help="(高値 − 安値) ÷ 始値。大きいほど『激しく動いた日』",
 )
 rr_body_max = st.sidebar.slider(
     "実体比率のしきい値（この値以下）", 0.0, 0.05, D["rr_body_max"], 0.001,
     format="%.3f",
-    help="|始値 − 終値| ÷ 始値。小さいほど『始値と終値が近い日』",
+    help="|始値 − 終値| ÷ 始値。小さいほど『ヨコヨコで終わった日』",
 )
 rr_days = st.sidebar.slider("判定対象の日数 N", 3, 40, D["rr_days"], 1)
 rr_ratio_min = st.sidebar.slider(
     "条件を満たす日の割合しきい値", 0.0, 1.0, D["rr_ratio_min"], 0.05,
-    help="直近N日のうち、該当日がこの割合以上ある銘柄を『クリア』とします",
+    help="直近N日のうち、ヨコヨコな日がこの割合以上ある銘柄を『ヨコヨコ銘柄』とします",
 )
 
 # スコアの数え方。単純な割合だと「並び順」の情報が捨てられてしまうため、
 # 直近の日を重く数える方式を初期値にしています(詳しくは screening.calc_weighted_ratio)。
 rr_score_mode = st.sidebar.radio(
-    "独自スコアの数え方",
+    "ヨコヨコ度の数え方",
     options=["weighted", "ratio"],
     format_func=lambda x: "直近重視（直近の日ほど重く数える）" if x == "weighted" else "単純割合（要件書どおり）",
     index=0 if D["rr_score_mode"] == "weighted" else 1,
@@ -233,7 +234,7 @@ rr_score_mode = st.sidebar.radio(
 # 日をまたいで切り上がっていく“階段状のトレンド銘柄”を拾ってしまうため、
 # 期間全体の値動きの幅もあわせて確認します。
 rr_use_band = st.sidebar.checkbox(
-    "終値レンジ幅の条件を使う", value=D["rr_use_band"],
+    "終値レンジ幅の条件を使う（期間全体でもヨコヨコか）", value=D["rr_use_band"],
     help="オフにすると、階段状に上がり続ける銘柄も候補に含まれます",
 )
 rr_band_max = st.sidebar.slider(
@@ -253,7 +254,7 @@ volume_spike_min = st.sidebar.slider(
 )
 range_rate_min = st.sidebar.slider(
     "日中値幅率の下限", 0.0, 0.15, D["range_rate_min"], 0.005, format="%.3f",
-    help="(高値 − 安値) ÷ 前日終値 ※独自条件とは分母が違います",
+    help="(高値 − 安値) ÷ 前日終値 ※ヨコヨコ条件とは分母が違います",
 )
 gap_rate_min = st.sidebar.slider(
     "ギャップ率の下限（絶対値）", 0.0, 0.10, D["gap_rate_min"], 0.005, format="%.3f",
@@ -269,7 +270,7 @@ liquidity_filter = st.sidebar.checkbox(
 
 st.sidebar.header("4. 総合スコアの重み")
 weight_standard = st.sidebar.slider("標準条件の重み", 0.0, 1.0, scoring.DEFAULT_WEIGHT_STANDARD, 0.1)
-weight_unique = st.sidebar.slider("独自条件の重み", 0.0, 1.0, scoring.DEFAULT_WEIGHT_UNIQUE, 0.1)
+weight_unique = st.sidebar.slider("ヨコヨコ条件の重み", 0.0, 1.0, scoring.DEFAULT_WEIGHT_UNIQUE, 0.1)
 
 # スライダーの値をまとめて1つの辞書にします。
 # こうしておくと、計算側(scoring.build_ranking)に渡すのが1行で済みます。
@@ -305,11 +306,11 @@ except Exception as e:
 # ============================================================
 # 4. 一覧表の表示
 # ============================================================
-st.header("スクリーニング結果")
+st.header("発見した銘柄")
 
 col1, col2, col3 = st.columns(3)
 col1.metric("対象銘柄数", f"{len(ranking)} 銘柄")
-col2.metric("独自条件クリア", f"{int(ranking['独自条件クリア'].sum())} 銘柄")
+col2.metric("ヨコヨコ銘柄", f"{int(ranking['ヨコヨコ銘柄'].sum())} 銘柄")
 col3.metric("標準条件すべてクリア", f"{int((ranking['標準条件充足数'] == 5).sum())} 銘柄")
 
 # 足切りで除外した銘柄は、隠したままにせず理由とあわせて確認できるようにします。
@@ -318,23 +319,23 @@ if not excluded.empty:
         show = excluded.copy()
         show["売買代金(億円)"] = (show["売買代金"] / 1e8).round(2)
         st.dataframe(
-            show[["銘柄コード", "銘柄名", "売買代金(億円)", "独自スコア", "連続該当日数"]],
+            show[["銘柄コード", "銘柄名", "売買代金(億円)", "ヨコヨコ度", "連続該当日数"]],
             hide_index=True, width="stretch",
         )
         st.caption(
-            "独自スコアが高くても、売買代金が小さい銘柄は実際には売買が成立しにくいため除外しています。"
+            "ヨコヨコ度が高くても、売買代金が小さい銘柄は実際には売買が成立しにくいため除外しています。"
             "サイドバーのチェックを外すと一覧に戻せます。"
         )
 
-only_unique = st.checkbox("独自条件をクリアした銘柄だけ表示する", value=False)
-view = ranking[ranking["独自条件クリア"]] if only_unique else ranking
+only_unique = st.checkbox("ヨコヨコ銘柄だけ表示する", value=False)
+view = ranking[ranking["ヨコヨコ銘柄"]] if only_unique else ranking
 
 if view.empty:
     st.warning("条件に合う銘柄がありません。サイドバーのしきい値を緩めてみてください。")
 else:
     # 表示用にコピーし、○×を見やすい記号に変換します(計算結果そのものは変えません)。
     display = view.copy()
-    for col in ["売買代金OK", "出来高急増OK", "値幅OK", "ギャップOK", "移動平均OK", "独自条件クリア"]:
+    for col in ["売買代金OK", "出来高急増OK", "値幅OK", "ギャップOK", "移動平均OK", "ヨコヨコ銘柄"]:
         display[col] = display[col].map({True: "✓", False: "−"})
 
     display["売買代金(億円)"] = (display["売買代金"] / 1e8).round(1)
@@ -346,14 +347,14 @@ else:
     for src, dst in [("日中値幅率", "日中値幅率(%)"), ("ギャップ率", "ギャップ率(%)"),
                      ("終値レンジ幅", "終値レンジ幅(%)")]:
         display[dst] = display[src] * 100
-    display["独自条件 該当"] = display.apply(
+    display["ヨコヨコ日数"] = display.apply(
         lambda r: f"{int(r['該当日数'])}/{int(r['判定日数'])} 日", axis=1
     )
 
     st.dataframe(
         display[[
-            "順位", "銘柄コード", "銘柄名", "総合スコア", "独自スコア", "独自条件 該当",
-            "連続", "終値レンジ幅(%)", "除外理由", "独自条件クリア", "標準スコア",
+            "順位", "銘柄コード", "銘柄名", "総合スコア", "ヨコヨコ度", "ヨコヨコ日数",
+            "連続", "終値レンジ幅(%)", "除外理由", "ヨコヨコ銘柄", "標準スコア",
             "売買代金OK", "出来高急増OK", "値幅OK", "ギャップOK", "移動平均OK",
             "売買代金(億円)", "出来高急増率", "日中値幅率(%)", "ギャップ率(%)", "MAクロス",
         ]],
@@ -364,13 +365,13 @@ else:
             "総合スコア": st.column_config.ProgressColumn(
                 "総合スコア", min_value=0, max_value=1, format="%.2f"
             ),
-            "独自スコア": st.column_config.ProgressColumn(
-                "独自スコア", min_value=0, max_value=1, format="%.2f"
+            "ヨコヨコ度": st.column_config.ProgressColumn(
+                "ヨコヨコ度", min_value=0, max_value=1, format="%.2f"
             ),
             "標準スコア": st.column_config.NumberColumn("標準スコア", format="%.2f"),
             "終値レンジ幅(%)": st.column_config.NumberColumn("終値レンジ幅", format="%.1f%%"),
             "連続": st.column_config.TextColumn("連続", help="最新日から数えて何日連続で該当しているか"),
-            "除外理由": st.column_config.TextColumn("除外理由", help="独自スコアが0になった理由"),
+            "除外理由": st.column_config.TextColumn("除外理由", help="ヨコヨコ度が0になった理由"),
             "出来高急増率": st.column_config.NumberColumn("出来高急増率", format="%.2f 倍"),
             "日中値幅率(%)": st.column_config.NumberColumn("日中値幅率", format="%.2f%%"),
             "ギャップ率(%)": st.column_config.NumberColumn("ギャップ率", format="%.2f%%"),
@@ -380,13 +381,13 @@ else:
         "✓ = 条件を満たす / − = 満たさない　"
         "「連続」= 最新日から何日連続で該当しているか。"
         "「除外理由」が入っている銘柄は、日々の形は条件を満たしていても"
-        "期間全体では値動きが片方向に偏っているため、独自スコアを0にしています。"
+        "期間全体では値動きが片方向に偏っているため、ヨコヨコ度を0にしています。"
         "※「日中値幅率」「ギャップ率」は前日終値を基準にした標準条件の値です。"
     )
 
 
 # ============================================================
-# 5. 銘柄詳細(チャート + 独自条件の判定履歴)
+# 5. 銘柄詳細(チャート + ヨコヨコ条件の判定履歴)
 # ============================================================
 st.header("銘柄詳細")
 
@@ -426,7 +427,7 @@ fig.add_trace(go.Scatter(
     line=dict(color="#8a8a8a", width=1.5, dash="dot"),
 ))
 
-# 独自条件の「該当日」に印を付けます。
+# ヨコヨコ条件の「該当日」に印を付けます。
 # 高値の少し上に▼を置くことで、ローソク足を隠さずにハイライトできます。
 hit_days = detail[detail["該当日"]]
 if not hit_days.empty:
@@ -435,7 +436,7 @@ if not hit_days.empty:
         y=hit_days["高値"] * 1.012,
         mode="markers",
         marker=dict(symbol="triangle-down", size=11, color="#7b2cbf"),
-        name="独自条件の該当日",
+        name="ヨコヨコだった日",
     ))
 
 # 判定対象期間(直近N日)を薄く塗って、どこを見ているか分かるようにします。
@@ -454,14 +455,14 @@ fig.update_layout(
 st.plotly_chart(fig, width="stretch")
 
 # --- 判定履歴の表 ---
-st.subheader(f"独自条件の判定履歴（直近 {rr_days} 日）")
+st.subheader(f"ヨコヨコ判定の履歴（直近 {rr_days} 日）")
 st.caption(
     f"判定条件: 値幅率 ≧ {rr_range_min:.1%} かつ 実体比率 ≦ {rr_body_max:.1%}"
 )
 
 history = detail.tail(rr_days).copy()
 history["日付"] = history["日付"].dt.strftime("%Y-%m-%d")
-history["判定"] = history["該当日"].map({True: "✓ 該当", False: "−"})
+history["判定"] = history["該当日"].map({True: "✓ ヨコヨコ", False: "−"})
 # 一覧表と同じ理由で、%表示する列はあらかじめ100倍しておきます
 history["値幅率(%)"] = history["値幅率(始値基準)"] * 100
 history["実体比率(%)"] = history["実体比率"] * 100
@@ -486,10 +487,10 @@ message = (
     f"（単純割合 {row['該当割合']:.2f} / 直近重視 {row['直近重視割合']:.2f}、"
     f"連続 {int(row['連続該当日数'])} 日）　"
     f"終値レンジ幅 {row['終値レンジ幅']:.1%}"
-    f"　→ 独自スコア **{row['独自スコア']:.2f}**（クリア基準 {rr_ratio_min:.0%}）"
+    f"　→ ヨコヨコ度 **{row['ヨコヨコ度']:.2f}**（クリア基準 {rr_ratio_min:.0%}）"
 )
 if row["除外理由"]:
-    st.warning(message + f"\n\n⚠ {row['除外理由']} のため、独自スコアを0にしています。"
+    st.warning(message + f"\n\n⚠ {row['除外理由']} のため、ヨコヨコ度を0にしています。"
                          "日々は行って来いの形でも、期間全体では値動きが片方向に偏っている銘柄です。")
 else:
     st.info(message)

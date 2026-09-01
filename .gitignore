@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+# backtest outputs
+ntt_daytrade_*.csv
+ntt_daytrade_*.png

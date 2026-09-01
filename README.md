@@ -2,6 +2,12 @@
 
 ## NTT day-trade backtest
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/furiya0530-oss/-SNS/blob/main/ntt_daytrade_colab.ipynb)
+
+iPad やスマホから動かすなら、上のバッジをタップして Colab で開き、
+「ランタイム」→「すべてのセルを実行」だけで結果が出ます
+(`ntt_daytrade_colab.ipynb`)。ローカルで動かす場合は以下を参照してください。
+
 `ntt_daytrade_backtest.py` backtests an intraday opening-range breakout (ORB) on
 NTT (`9432.T`, Tokyo Stock Exchange). It is a day-trading model: at most one
 position per session, and always flat by the close.

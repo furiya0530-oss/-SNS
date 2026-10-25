@@ -1,0 +1,52 @@
+[
+  {
+    "id": "s1-001",
+    "stage": 1,
+    "unit": "be動詞と一般動詞",
+    "scene": "社内メール",
+    "sentence": "Ms. Tanaka ____ in the meeting room now.",
+    "choices": ["is", "are", "be", "does"],
+    "answerIndex": 0,
+    "explanation": "主語は Ms. Tanaka の1人だから is だ。「〜にいる」は be動詞で表すんだぞ。"
+  },
+  {
+    "id": "s1-002",
+    "stage": 1,
+    "unit": "be動詞と一般動詞",
+    "scene": "定例会議",
+    "sentence": "Mr. Sato ____ the sales report every Monday.",
+    "choices": ["check", "checks", "is check", "checking"],
+    "answerIndex": 1,
+    "explanation": "主語が3人称単数で習慣の話だから checks。be動詞と一般動詞を並べる is check は誤りだ。"
+  },
+  {
+    "id": "s1-003",
+    "stage": 1,
+    "unit": "名詞の単数・複数",
+    "scene": "出張手配",
+    "sentence": "We need two ____ for the business trip to Osaka.",
+    "choices": ["ticket", "tickets", "a ticket", "ticket's"],
+    "answerIndex": 1,
+    "explanation": "two がついたら名詞は複数形。tickets で決まりだ。経費精算も枚数を間違えるなよ。"
+  },
+  {
+    "id": "s1-004",
+    "stage": 1,
+    "unit": "名詞の単数・複数",
+    "scene": "プロジェクト相談",
+    "sentence": "Could you give me some ____ about the new project?",
+    "choices": ["information", "informations", "an information", "information's"],
+    "answerIndex": 0,
+    "explanation": "information は数えられない名詞だから s も an もつかない。TOEICの定番だ、覚えておけ。"
+  },
+  {
+    "id": "s1-005",
+    "stage": 1,
+    "unit": "代名詞",
+    "scene": "取引先へのメール",
+    "sentence": "Thank you for ____ email yesterday.",
+    "choices": ["you", "your", "yours", "yourself"],
+    "answerIndex": 1,
+    "explanation": "後ろに名詞 email があるから「あなたの」の your。yours は「あなたのもの」で、名詞の前には置けない。"
+  }
+]

@@ -4,6 +4,7 @@ import {
   DEMOTION_BACKLOG,
   EXAM_UNLOCK_CORRECT,
   OPEN_GRACE_MS,
+  SCHEDULE_DAYS,
 } from './rules';
 import type { Delivery, ExamRecord, GameState, Question, Settings } from './types';
 
@@ -74,6 +75,72 @@ export function planDayTimes(settings: Settings, dayStart: number, rand: () => n
     times.push(dayStart + start + Math.floor(rand() * (end - start)));
   }
   return times.sort((a, b) => a - b);
+}
+
+/**
+ * これから届く出題を、SCHEDULE_DAYS 日先まで作る。
+ * replan = true（設定を変えたとき）は、まだ届いていない出題を作り直す。
+ */
+export function planDeliveries(
+  state: GameState,
+  now: number,
+  rand: () => number,
+  pool: Question[],
+  newId: () => string,
+  replan = false,
+): GameState {
+  const today = startOfDay(now);
+  let deliveries = state.deliveries;
+  let from = Math.max(state.plannedUntil ?? today, today);
+  if (replan) {
+    deliveries = deliveries.filter((d) => d.scheduledAt <= now || d.answeredAt !== undefined || d.openedAt !== undefined);
+    from = today;
+  }
+  const until = startOfDay(today + SCHEDULE_DAYS * DAY_MS + DAY_MS / 2);
+  const planned = new Set(deliveries.filter((d) => d.scheduledAt > now).map((d) => d.questionId));
+  const added: Delivery[] = [];
+  for (let t = from + DAY_MS / 2; t < until; t += DAY_MS) {
+    for (const at of planDayTimes(state.settings, startOfDay(t), rand)) {
+      if (at <= now) continue;
+      const q = pickQuestion(pool, [...deliveries, ...added], state.stage, rand, planned);
+      if (!q) continue;
+      planned.add(q.id);
+      added.push({ id: newId(), userId: state.userId, questionId: q.id, stage: state.stage, unit: q.unit, scheduledAt: at });
+    }
+  }
+  return { ...state, deliveries: [...deliveries, ...added], plannedUntil: until };
+}
+
+/** まだ届いていない出題（通知を予約するもの） */
+export function upcoming(state: GameState, now: number): Delivery[] {
+  return state.deliveries
+    .filter((d) => d.scheduledAt > now && d.answeredAt === undefined && !d.expired)
+    .sort((a, b) => a.scheduledAt - b.scheduledAt);
+}
+
+/** 休日モード中なら今日を休日として記録する（出勤記録が途切れないように） */
+export function markHoliday(state: GameState, now: number): GameState {
+  const today = dayKey(now);
+  if (!state.settings.holidayMode || state.holidayDays.includes(today)) return state;
+  return { ...state, holidayDays: [...state.holidayDays, today] };
+}
+
+/**
+ * アプリを開いたときや設定を変えたときの更新。
+ * 休日の記録 → 降格の判定 → 出題予定の作成 の順に行う。
+ * ステージが変わったら、まだ届いていない出題は新しいステージの問題で作り直す。
+ */
+export function refresh(
+  state: GameState,
+  now: number,
+  rand: () => number,
+  pool: Question[],
+  newId: () => string,
+  replan = false,
+): GameState {
+  const s = applyDemotion(markHoliday(state, now), now);
+  const stageChanged = upcoming(s, now).some((d) => d.stage !== s.stage);
+  return planDeliveries(s, now, rand, pool, newId, replan || stageChanged);
 }
 
 /** 未処理案件: 通知の時刻を過ぎたのに答えていない出題 */

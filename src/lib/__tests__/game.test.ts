@@ -8,12 +8,15 @@ import {
   canTakeExam,
   createInitialState,
   DAY_MS,
+  markHoliday,
   markOpened,
   pickQuestion,
   planDayTimes,
+  planDeliveries,
   recordExam,
   startOfDay,
   streak,
+  upcoming,
   weeklyReport,
 } from '../game';
 import { DEMOTION_BACKLOG, EXAM_UNLOCK_CORRECT } from '../rules';
@@ -171,5 +174,27 @@ describe('今週の成績表', () => {
     assert.equal(r.days[0].day, '2026-10-19');
     assert.deepEqual(r.days[2], { day: '2026-10-21', total: 1, correct: 1, late: 1, missed: 0 });
     assert.deepEqual(r.units, [{ unit: 'be動詞', total: 1, correct: 1 }]);
+  });
+});
+
+describe('出題予定の作成', () => {
+  const pool = Array.from({ length: 30 }, (_, i) => q(`q${i}`));
+  let n = 0;
+  const newId = () => `new${n++}`;
+
+  it('7日先まで1日3回ずつ作り、過去の時刻は作らない。2回目は増やさない', () => {
+    // 乱数 0 = 各時間帯の開始時刻。今日は 12:30 時点なので夜の1回だけ残る → 1 + 6日 × 3
+    const s = planDeliveries(base(), NOW, () => 0, pool, newId);
+    const future = upcoming(s, NOW);
+    assert.equal(future.length, 1 + 6 * 3);
+    assert.equal(new Set(future.map((d) => d.questionId)).size, future.length);
+    assert.equal(planDeliveries(s, NOW + 60_000, Math.random, pool, newId).deliveries.length, s.deliveries.length);
+  });
+
+  it('設定を変えたら届いていない出題を作り直し、休日モードなら作らない', () => {
+    const s = planDeliveries(base(), NOW, Math.random, pool, newId);
+    const holiday = { ...s, settings: { ...s.settings, holidayMode: true } };
+    assert.equal(upcoming(planDeliveries(holiday, NOW, Math.random, pool, newId, true), NOW).length, 0);
+    assert.equal(markHoliday(holiday, NOW).holidayDays.length, 1);
   });
 });

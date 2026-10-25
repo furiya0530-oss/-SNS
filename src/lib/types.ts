@@ -86,5 +86,7 @@ export type GameState = {
   exams: ExamRecord[];
   /** 休日モードだった日（YYYY-MM-DD） */
   holidayDays: string[];
+  /** この日（0時）より前の日は出題予定を作成済み */
+  plannedUntil?: number;
   notice?: Notice;
 };

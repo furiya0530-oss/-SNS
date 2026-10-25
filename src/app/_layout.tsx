@@ -1,10 +1,11 @@
 import Stack from 'expo-router/stack';
 import { StatusBar } from 'expo-status-bar';
+import { GameProvider } from '../lib/GameProvider';
 import { colors } from '../lib/theme';
 
 export default function RootLayout() {
   return (
-    <>
+    <GameProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -16,6 +17,6 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="quiz" options={{ title: '業務連絡（出題）', presentation: 'modal' }} />
       </Stack>
-    </>
+    </GameProvider>
   );
 }

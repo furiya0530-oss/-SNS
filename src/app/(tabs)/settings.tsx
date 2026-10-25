@@ -58,9 +58,9 @@ export default function SettingsScreen() {
         {draft.windows.map((w, i) => (
           <View key={i} style={styles.windowRow}>
             <TextInput style={[styles.input, { flex: 1 }]} value={w.label} onChangeText={(label) => setWindow(i, { label })} />
-            <TextInput style={styles.input} value={w.start} onChangeText={(start) => setWindow(i, { start })} placeholder="07:30" keyboardType="numbers-and-punctuation" />
+            <TextInput style={[styles.input, styles.time]} value={w.start} onChangeText={(start) => setWindow(i, { start })} placeholder="07:30" keyboardType="numbers-and-punctuation" />
             <Text>〜</Text>
-            <TextInput style={styles.input} value={w.end} onChangeText={(end) => setWindow(i, { end })} placeholder="08:30" keyboardType="numbers-and-punctuation" />
+            <TextInput style={[styles.input, styles.time]} value={w.end} onChangeText={(end) => setWindow(i, { end })} placeholder="08:30" keyboardType="numbers-and-punctuation" />
             <Text
               style={styles.remove}
               onPress={() => setDraft((d) => ({ ...d, windows: d.windows.filter((_, j) => j !== i) }))}
@@ -112,11 +112,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 8,
-    minWidth: 62,
     fontSize: 15,
     color: colors.text,
   },
-  remove: { color: colors.wrong, paddingHorizontal: 4 },
+  time: { width: 64, textAlign: 'center' },
+  remove: { color: colors.wrong, paddingHorizontal: 4, flexShrink: 0 },
   switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   label: { fontSize: 16, color: colors.text },
 });

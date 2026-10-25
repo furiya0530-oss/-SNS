@@ -95,6 +95,9 @@ export function planDeliveries(
   if (replan) {
     deliveries = deliveries.filter((d) => d.scheduledAt <= now || d.answeredAt !== undefined || d.openedAt !== undefined);
     from = today;
+  } else if (!deliveries.some((d) => d.scheduledAt > now)) {
+    // 予定が何かの理由で消えていたら、今日から作り直す
+    from = today;
   }
   const until = startOfDay(today + SCHEDULE_DAYS * DAY_MS + DAY_MS / 2);
   const planned = new Set(deliveries.filter((d) => d.scheduledAt > now).map((d) => d.questionId));

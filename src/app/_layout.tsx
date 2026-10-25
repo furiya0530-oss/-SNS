@@ -18,6 +18,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="quiz" options={{ title: '業務連絡（出題）', presentation: 'modal' }} />
+        <Stack.Screen name="exam" options={{ title: '昇進試験', gestureEnabled: false }} />
       </Stack>
     </GameProvider>
   );

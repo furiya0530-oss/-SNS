@@ -191,6 +191,12 @@ describe('出題予定の作成', () => {
     assert.equal(planDeliveries(s, NOW + 60_000, Math.random, pool, newId).deliveries.length, s.deliveries.length);
   });
 
+  it('予定が消えていたら作り直す', () => {
+    const s = planDeliveries(base(), NOW, () => 0, pool, newId);
+    const emptied = { ...s, deliveries: s.deliveries.filter((d) => d.scheduledAt <= NOW) };
+    assert.equal(upcoming(planDeliveries(emptied, NOW, () => 0, pool, newId), NOW).length, 19);
+  });
+
   it('設定を変えたら届いていない出題を作り直し、休日モードなら作らない', () => {
     const s = planDeliveries(base(), NOW, Math.random, pool, newId);
     const holiday = { ...s, settings: { ...s.settings, holidayMode: true } };
